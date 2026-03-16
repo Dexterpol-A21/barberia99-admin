@@ -1,6 +1,6 @@
 ---
 import BarberoLayout from "../../layouts/BarberoLayout.astro";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Users, Clock, CheckCircle, Wallet } from "lucide-react";
 import ButtonCTA from "../../components/ui/ButtonCTA.astro";
 ---
 
@@ -8,40 +8,203 @@ import ButtonCTA from "../../components/ui/ButtonCTA.astro";
     <div class="w-full mx-auto space-y-6">
         <h1 class="hidden">Agenda de Citas</h1>
 
+        <!-- Resumen de Métricas del Día -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-carbon/60 border border-white/5 p-4 rounded-sm backdrop-blur-sm">
+                <span class="text-[10px] text-cement uppercase tracking-widest font-bold mb-1 block">Citas de Hoy</span>
+                <span id="metricTotalApps" class="text-2xl font-display text-white border-l-2 border-amber pl-3 block">0</span>
+            </div>
+            <div class="bg-carbon/60 border border-white/5 p-4 rounded-sm backdrop-blur-sm">
+                <span class="text-[10px] text-cement uppercase tracking-widest font-bold mb-1 block">Completadas</span>
+                <span id="metricCompleted" class="text-2xl font-display text-white border-l-2 border-green-500 pl-3 block">0</span>
+            </div>
+            <div class="bg-carbon/60 border border-white/5 p-4 rounded-sm backdrop-blur-sm">
+                <span class="text-[10px] text-cement uppercase tracking-widest font-bold mb-1 block">Ingresos (Est)</span>
+                <span id="metricEarnings" class="text-2xl font-display text-white border-l-2 border-amber pl-3 block">$0</span>
+            </div>
+            <div class="bg-carbon/60 border border-white/5 p-4 rounded-sm backdrop-blur-sm">
+                <span class="text-[10px] text-cement uppercase tracking-widest font-bold mb-1 block">Clientes Nuevos</span>
+                <span id="metricNewClients" class="text-2xl font-display text-white border-l-2 border-blue-500 pl-3 block">0</span>
+            </div>
+        </div>
+
         <!-- Toolbar de Navegación del Calendario -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="flex items-center gap-2">
-                <button class="bg-carbon/60 hover:bg-white/10 text-cement hover:text-white border border-white/10 w-10 h-10 rounded-sm flex items-center justify-center transition-colors">
+                <button id="btnPrevDay" class="bg-carbon/60 hover:bg-white/10 text-cement hover:text-white border border-white/10 w-10 h-10 rounded-sm flex items-center justify-center transition-colors">
                     <ChevronLeft size={18} />
                 </button>
                 <div class="bg-carbon/60 border border-white/10 h-10 px-4 rounded-sm flex items-center justify-center min-w-[200px]">
-                    <p class="text-white text-sm font-medium">8 de Marzo, 2026</p>
+                    <p id="currentDateDisplay" class="text-white text-sm font-medium">Cargando fecha...</p>
                 </div>
-                <button class="bg-carbon/60 hover:bg-white/10 text-cement hover:text-white border border-white/10 w-10 h-10 rounded-sm flex items-center justify-center transition-colors">
+                <button id="btnNextDay" class="bg-carbon/60 hover:bg-white/10 text-cement hover:text-white border border-white/10 w-10 h-10 rounded-sm flex items-center justify-center transition-colors">
                     <ChevronRight size={18} />
                 </button>
-                <button class="bg-carbon/60 hover:bg-white/10 text-cement hover:text-white border border-white/10 h-10 px-3 ml-2 rounded-sm text-sm transition-colors hidden sm:block">
+                <button id="btnToday" class="bg-carbon/60 hover:bg-white/10 text-cement hover:text-white border border-white/10 h-10 px-3 ml-2 rounded-sm text-sm transition-colors hidden sm:block">
                     Hoy
                 </button>
             </div>
-            
+
             <div class="flex items-center gap-3 w-full sm:w-auto">
-                <div class="bg-carbon/60 border border-white/10 rounded-sm p-1 flex">
-                    <button class="px-3 py-1 bg-white/10 text-white rounded-[1px] text-xs font-medium">Día</button>
-                    <button class="px-3 py-1 text-cement hover:text-white rounded-[1px] text-xs transition-colors">Semana</button>
-                </div>
                 <ButtonCTA class="!h-10 !px-4 !text-sm !w-auto !min-w-0 !font-semibold">
                     + Nueva Cita
                 </ButtonCTA>
             </div>
         </div>
 
-        <!-- Contenedor Principal (Calendario) -->
-        <div class="bg-carbon/60 border border-white/5 rounded-sm backdrop-blur-sm p-0 overflow-hidden">
-            <div class="flex items-center justify-center p-6 h-[65vh] border border-white/10 border-dashed rounded-sm m-6">
-                <div class="flex flex-col items-center gap-3 opacity-50">
-                    <CalendarIcon size={32} class="text-amber" />
-                    <p class="text-cement text-sm font-mono">[ Calendario de citas irá aquí ]</p>
+        <!-- Contenedor Principal (Lista de citas) -->
+        <div class="bg-carbon/60 border border-white/5 rounded-sm backdrop-blur-sm p-4 overflow-hidden min-h-[50vh]">
+            <div class="flex flex-col gap-3" id="appointmentsList">
+                <div class="flex justify-center items-center h-40">
+                    <p class="text-cement text-sm animate-pulse">Cargando citas...</p>
                 </div>
+            </div>
+        </div>
     </div>
 </BarberoLayout>
+
+<script>
+    import { supabase } from "../../lib/supabase";
+
+    document.addEventListener('DOMContentLoaded', () => {
+        let currentDate = new Date();
+
+        const dateDisplay = document.getElementById('currentDateDisplay');
+        const appointmentsList = document.getElementById('appointmentsList');
+        const metricTotalApps = document.getElementById('metricTotalApps');
+        const metricCompleted = document.getElementById('metricCompleted');
+        const metricEarnings = document.getElementById('metricEarnings');
+        const metricNewClients = document.getElementById('metricNewClients');
+
+        const btnPrev = document.getElementById('btnPrevDay');
+        const btnNext = document.getElementById('btnNextDay');
+        const btnToday = document.getElementById('btnToday');
+
+        const formatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
+        function updateDateDisplay() {
+            let texto = currentDate.toLocaleDateString('es-ES', formatOptions);
+            dateDisplay.textContent = texto.charAt(0).toUpperCase() + texto.slice(1);
+        }
+
+        async function fetchAppointments() {
+            appointmentsList.innerHTML = `<div class="flex justify-center items-center h-40"><p class="text-cement text-sm animate-pulse">Cargando citas...</p></div>`;
+
+            // Establecer limites para el día actual
+            const startOfDay = new Date(currentDate);
+            startOfDay.setHours(0,0,0,0);
+            const endOfDay = new Date(currentDate);
+            endOfDay.setHours(23,59,59,999);
+
+            try {
+                const { data, error } = await supabase
+                    .from('appointments')
+                    .select('*, profiles(firstName, lastName, phone, level)')
+                    .gte('startTime', startOfDay.toISOString())
+                    .lte('startTime', endOfDay.toISOString())
+                    .order('startTime', { ascending: true });
+
+                if (error) throw error;
+
+                renderAppointments(data || []);
+            } catch (err) {
+                console.error("Error al cargar citas:", err);
+                appointmentsList.innerHTML = `<p class="text-red-400 text-center py-10">Error cargando agenda.</p>`;
+            }
+        }
+
+        function renderAppointments(apps) {
+            // Actualizar Métricas
+            const completadas = apps.filter(a => a.status === 'completed' || a.status === 'completada').length;
+            const pendientes = apps.filter(a => a.status === 'pending' || a.status === 'pendiente').length;
+            const confirmadas = apps.filter(a => a.status === 'confirmed' || a.status === 'confirmada').length;
+            
+            // Asumimos un ingreso genérico por corte para la vista de ejemplo, típicamente $15 ~ $25
+            const ingresoEstimado = completadas * 20;
+
+            if (metricTotalApps) metricTotalApps.textContent = apps.length.toString();
+            if (metricCompleted) metricCompleted.textContent = completadas.toString();
+            if (metricEarnings) metricEarnings.textContent = `$${ingresoEstimado}`;
+            
+            // Contar clientes nuevos (suponiendo que nivel bronce = nuevo o reciente)
+            const nuevos = apps.filter(a => a.profiles?.level === 'Bronce' || !a.profiles?.level).length;
+            if (metricNewClients) metricNewClients.textContent = nuevos.toString();
+
+            if (apps.length === 0) {
+                appointmentsList.innerHTML = `
+                    <div class="flex flex-col items-center justify-center p-12 opacity-50 border border-white/5 border-dashed rounded-sm">
+                        <p class="text-cement text-sm font-mono mt-4">[ No hay citas agendadas para este día ]</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            apps.forEach(app => {
+                const timeStr = new Date(app.startTime).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
+                const profile = app.profiles || { firstName: 'Cliente', lastName: 'Desconocido', phone: 'N/A' };
+                const isCompleted = app.status === 'completed' || app.status === 'completada';
+                const isCancelled = app.status === 'cancelled' || app.status === 'cancelada';
+                
+                let borderCol = 'border-white/10';
+                let statusBadge = '<span class="bg-amber/20 text-amber text-[10px] px-2 py-0.5 rounded-[1px] uppercase">Pendiente</span>';
+                
+                if(isCompleted) {
+                    borderCol = 'border-green-500/30';
+                    statusBadge = '<span class="bg-green-500/20 text-green-400 text-[10px] px-2 py-0.5 rounded-[1px] uppercase">Completada</span>';
+                } else if (isCancelled) {
+                    borderCol = 'border-red-500/30';
+                    statusBadge = '<span class="bg-red-500/20 text-red-400 text-[10px] px-2 py-0.5 rounded-[1px] uppercase">Cancelada</span>';
+                }
+
+                html += `
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-white/5 hover:bg-white/10 border-l-2 ${borderCol} rounded-[2px] transition-colors gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-carbon border border-white/10 w-16 h-16 flex flex-col items-center justify-center rounded-[2px]">
+                                <span class="text-white font-display text-lg leading-none">${timeStr.split(':')[0]}</span>
+                                <span class="text-cement text-xs">${timeStr.split(':')[1]}</span>
+                            </div>
+                            <div>
+                                <h3 class="text-white font-medium text-lg leading-none mb-1">${profile.firstName} ${profile.lastName}</h3>
+                                <p class="text-cement text-xs flex gap-2 items-center">
+                                    <span>��� ${profile.phone || 'Sin número'}</span>
+                                    ${app.service ? `<span class="opacity-50">|</span> <span>✂ ${app.service}</span>` : ''}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 w-full sm:w-auto justify-end mt-2 sm:mt-0">
+                            ${statusBadge}
+                            <button class="px-3 py-1.5 bg-carbon border border-white/10 hover:border-amber text-cement hover:text-amber text-xs rounded-[1px] transition-colors">
+                                Ver Detalle
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            appointmentsList.innerHTML = html;
+        }
+
+        // Navegación
+        btnPrev.addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() - 1);
+            updateDateDisplay();
+            fetchAppointments();
+        });
+
+        btnNext.addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() + 1);
+            updateDateDisplay();
+            fetchAppointments();
+        });
+
+        btnToday.addEventListener('click', () => {
+            currentDate = new Date();
+            updateDateDisplay();
+            fetchAppointments();
+        });
+
+        // Inicializar
+        updateDateDisplay();
+        fetchAppointments();
+    });
+</script>
