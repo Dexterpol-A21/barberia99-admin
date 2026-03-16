@@ -1,0 +1,236 @@
+---
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import { Users, Scissors, Calendar, DollarSign } from "lucide-react";
+
+// Server-side fetching simulado o real iría aquí
+// const { data: stats } = await supabase.from('...').select('...');
+---
+
+<DashboardLayout title="Resumen General | Barbería 99">
+    <div class="w-full mx-auto space-y-8">
+        <h1 class="hidden">Resumen General</h1>
+        
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-carbon/60 border border-white/5 p-5 rounded-sm backdrop-blur-sm relative overflow-hidden group">
+                <div class="absolute right-[-10px] top-[-10px] opacity-5 group-hover:scale-110 transition-transform duration-500 pointer-events-none">
+                    <DollarSign size={100} />
+                </div>
+                <span class="text-[10px] text-cement uppercase tracking-widest font-bold mb-1 block">Ingresos de Hoy</span>
+                <span id="metricIngresos" class="text-3xl font-display text-white border-l-2 border-amber pl-3 block">...</span>
+                <span id="metricEsperado" class="text-xs text-cement mt-2 block">+ $0 esperados</span>
+            </div>
+
+            <div class="bg-carbon/60 border border-white/5 p-5 rounded-sm backdrop-blur-sm relative overflow-hidden group">
+                <div class="absolute right-[-10px] top-[-10px] opacity-5 group-hover:scale-110 transition-transform duration-500 pointer-events-none">
+                    <Scissors size={100} />
+                </div>
+                <span class="text-[10px] text-cement uppercase tracking-widest font-bold mb-1 block">Cortes Realizados</span>
+                <span id="metricCortes" class="text-3xl font-display text-white border-l-2 border-amber pl-3 block">...</span>
+            </div>
+
+            <div class="bg-carbon/60 border border-white/5 p-5 rounded-sm backdrop-blur-sm relative overflow-hidden group">
+                <div class="absolute right-[-10px] top-[-10px] opacity-5 group-hover:scale-110 transition-transform duration-500 pointer-events-none">
+                    <Calendar size={100} />
+                </div>
+                <span class="text-[10px] text-cement uppercase tracking-widest font-bold mb-1 block">Citas Restantes</span>
+                <span id="metricCitas" class="text-3xl font-display text-amber border-l-2 border-white pl-3 block">...</span>
+            </div>
+
+            <div class="bg-carbon/60 border border-white/5 p-5 rounded-sm backdrop-blur-sm relative overflow-hidden group">
+                <div class="absolute right-[-10px] top-[-10px] opacity-5 group-hover:scale-110 transition-transform duration-500 pointer-events-none">
+                    <Users size={100} />
+                </div>
+                <span class="text-[10px] text-cement uppercase tracking-widest font-bold mb-1 block">Barberos Totales</span>
+                <span id="metricBarberos" class="text-3xl font-display text-white border-l-2 border-green-500 pl-3 block">...</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Chart Placeholder -->
+            <div class="lg:col-span-2 bg-carbon/60 border border-white/5 min-h-[400px] rounded-sm backdrop-blur-sm flex items-center justify-center flex-col gap-3 p-6 relative overflow-hidden">
+                <div class="absolute top-6 left-6">
+                    <h3 class="font-display text-lg text-white">Ingresos de la Semana</h3>
+                    <p class="text-xs text-cement">Desempeño de la semana actual</p>
+                </div>
+                <div class="pr-4 mt-6 h-full w-full opacity-60 flex items-end">
+                     <!-- Espacio para futura integración de canvas o D3 -->
+                     <ul class="flex w-full justify-between items-end h-[200px]" id="simpleChartMock"></ul>
+                </div>
+            </div>
+
+            <!-- Activity List -->
+            <div class="bg-carbon/60 border border-white/5 min-h-[400px] rounded-sm backdrop-blur-sm p-6 flex flex-col">
+                <div class="mb-4 flex items-center justify-between">
+                    <h3 class="font-display text-lg text-white">Próximas Citas</h3>
+                    <a href="/dashboard/agenda" class="text-xs text-amber hover:text-white transition-colors">Ver todas &rarr;</a>
+                </div>
+
+                <div id="upcomingList" class="flex-1 space-y-4 overflow-y-auto pr-2">
+                    <p class="text-cement text-sm animate-pulse">Cargando citas...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</DashboardLayout>
+
+<script>
+    import { supabase } from "../../lib/supabase";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            
+            // Calc date 7 days ago for the chart
+            const weekAgo = new Date(now);
+            weekAgo.setDate(now.getDate() - 6);
+            const weekAgoStr = `${weekAgo.getFullYear()}-${String(weekAgo.getMonth() + 1).padStart(2, '0')}-${String(weekAgo.getDate()).padStart(2, '0')}`;
+
+            // Fetch appointments for today and future, and past 7 days for the chart
+            const { data: apps, error: appError } = await supabase
+                .from('appointments')
+                .select(`id, appointment_date, appointment_time, status, price, notes, barbers(nickname)`)
+                .gte('appointment_date', weekAgoStr)
+                .order('appointment_date', { ascending: true })
+                .order('appointment_time', { ascending: true });
+
+            if (appError) throw appError;
+
+            // Fetch barbers 
+            const { count: barberCount, error: barberError } = await supabase
+                .from('barbers')
+                .select('id', { count: 'exact' });
+
+            if (barberError) throw barberError;
+
+            let ingresosHoy = 0;
+            let ingresosEsperados = 0;
+            let cortesRealizados = 0;
+            let citasRestantes = 0;
+            const upcomingAppointments = [];
+            
+            // Data for chart (last 7 days)
+            const weeklyIncome = [0, 0, 0, 0, 0, 0, 0];
+            const weeklyLabels = [];
+            
+            for(let i=0; i<7; i++) {
+                let d = new Date(weekAgo);
+                d.setDate(weekAgo.getDate() + i);
+                weeklyLabels.push(['D','L','M','M','J','V','S'][d.getDay()]);
+            }
+
+            // Parsear data
+            apps.forEach(a => {
+                const s = (a.status || '').toLowerCase();
+                const price = Number(a.price) || 0;
+                
+                // Chart calculations
+                if (s === 'completed' || s === 'completada') {
+                    const dParts = a.appointment_date.split('-');
+                    const aDate = new Date(dParts[0], dParts[1]-1, dParts[2]);
+                    const diffTime = Math.abs(aDate - weekAgo);
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    if(diffDays >= 0 && diffDays < 7) {
+                        weeklyIncome[diffDays] += price;
+                    }
+                }
+
+                // Today calculations
+                if (a.appointment_date === todayStr) {
+                    if (s === 'completed' || s === 'completada') {
+                        cortesRealizados++;
+                        ingresosHoy += price;
+                    } else if (s !== 'cancelled' && s !== 'cancelada') {
+                        citasRestantes++;
+                        ingresosEsperados += price;
+                    }
+                }
+            });
+
+            // Encontrar las próximas citas (futuras, no canceladas ni completadas)
+            apps.filter(a => a.appointment_date >= todayStr).forEach(a => {
+                const s = (a.status || '').toLowerCase();
+                if (s !== 'cancelled' && s !== 'cancelada' && s !== 'completed' && s !== 'completada' && upcomingAppointments.length < 5) {
+                    upcomingAppointments.push(a);
+                }
+            });
+
+            // Actualizar UI - Stats
+            document.getElementById('metricIngresos').innerText = `$${ingresosHoy.toLocaleString()}`;
+            document.getElementById('metricEsperado').innerText = `+ $${ingresosEsperados.toLocaleString()} esperados hoy`;
+            document.getElementById('metricCortes').innerText = cortesRealizados;
+            document.getElementById('metricCitas').innerText = citasRestantes;
+            document.getElementById('metricBarberos').innerText = barberCount || 0;
+
+            // Renderizar Lista
+            const listContainer = document.getElementById('upcomingList');
+            if (upcomingAppointments.length === 0) {
+                listContainer.innerHTML = `<p class="text-cement text-sm text-center py-6">No hay citas próximas programadas.</p>`;
+            } else {
+                listContainer.innerHTML = upcomingAppointments.map(app => {
+                    const isToday = app.appointment_date === todayStr;
+                    const dateTag = isToday ? 'Hoy' : app.appointment_date.split('-')[2]; // el día
+                    const dateMonth = isToday ? '' : ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(app.appointment_date.split('-')[1]) - 1];
+
+                    const timeStr = app.appointment_time ? app.appointment_time.substring(0, 5) : '00:00';
+                    const barber = app.barbers?.nickname || 'Sin asignar';
+
+                    let serviceName = 'Servicio General';
+                    if (app.notes) {
+                        try {
+                            const parsed = JSON.parse(app.notes);
+                            if (parsed.services && parsed.services.length > 0) {
+                                serviceName = parsed.services[0].name + (parsed.services.length > 1 ? '...' : '');
+                            }
+                        } catch(e) { }
+                    }
+
+                    return `
+                    <div class="flex items-start gap-4 p-3 bg-white/5 rounded-sm border-l-2 ${isToday ? 'border-amber' : 'border-white/20'}">
+                        <div class="text-center shrink-0 w-12">
+                            <span class="block text-xs text-cement uppercase font-bold">${dateTag} ${dateMonth}</span>
+                            <span class="block font-display ${isToday ? 'text-white' : 'text-cement/70'}">${timeStr}</span>
+                        </div>
+                        <div class="truncate">
+                            <p class="text-sm ${isToday ? 'text-white' : 'text-cement/70'} font-medium truncate">${serviceName}</p>
+                            <p class="text-[11px] text-cement">con <span class="text-white/80">${barber}</span></p>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            }
+
+            // Real Chart Builder
+            const chart = document.getElementById('simpleChartMock');
+            if(chart) {
+                let maxIncome = Math.max(...weeklyIncome);
+                if (maxIncome === 0) maxIncome = 1; // avoid division by zero
+                
+                let chartHtml = '';
+                for(let i=0; i<7; i++) {
+                    const h = (weeklyIncome[i] / maxIncome) * 100;
+                    // Mínimo de visualización 2% para ver la barra
+                    const finalH = h < 2 ? 2 : h; 
+                    const isTodayMock = i === 6; // El último día de los 7 calculados es hoy
+                    
+                    chartHtml += `
+                        <li class="w-full flex justify-center group relative h-full items-end pb-8" title="$${weeklyIncome[i].toLocaleString()}">
+                            <div class="w-1/2 rounded-t-sm transition-all duration-300 ${isTodayMock ? 'bg-amber' : 'bg-white/20 group-hover:bg-white/40'}" style="height: ${finalH}%"></div>
+                            <span class="absolute bottom-0 text-[10px] text-cement uppercase">${weeklyLabels[i]}</span>
+                            <div class="absolute bottom-[calc(${finalH}%+2rem)] opacity-0 group-hover:opacity-100 transition-opacity bg-carbon border border-white/10 text-white text-[10px] px-2 py-1 rounded w-max z-10 pointer-events-none mb-1">
+                                $${weeklyIncome[i].toLocaleString()}
+                            </div>
+                        </li>
+                    `;
+                }
+                chart.innerHTML = chartHtml;
+            }
+
+        } catch (error) {
+            console.error('Data error:', error);
+            const listContainer = document.getElementById('upcomingList');
+            if(listContainer) listContainer.innerHTML = `<p class="text-red-400 text-sm">Error cargando información.</p>`;
+        }
+    });
+</script>

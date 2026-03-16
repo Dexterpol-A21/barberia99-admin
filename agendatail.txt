@@ -1,0 +1,600 @@
+
+                                <div class="mt-6 mb-2 text-center">
+                                    <p class="text-xs text-cement font-medium">
+                                        Ganarás{" "}
+                                        <span
+                                            id="desktop-summary-points"
+                                            class="font-bold text-amber"
+                                        >
+                                            +0 Puntos
+                                        </span>{" "}
+                                        con esta visita
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+
+                {/* Mobile Bottom Bar Summary */}
+                <div
+                    class="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-cement/10 p-5 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] z-50 flex items-center justify-between pb-[env(safe-area-bottom,20px)]"
+                >
+                    <div>
+                        <p
+                            id="mobile-services-count"
+                            class="text-xs font-bold text-cement/70 uppercase tracking-widest mb-0.5"
+                        >
+                            Total (0 servicios)
+                        </p>
+                        <p
+                            id="mobile-summary-price"
+                            class="text-2xl font-display font-extrabold text-amber"
+                        >
+                            $0.00
+                        </p>
+                    </div>
+                    <ButtonCTA
+                        id="mobile-summary-btn"
+                        disabled
+                        href="/fecha"
+                        class="!h-[48px] !text-sm !px-6 w-auto min-w-[140px] shadow-lg shadow-amber/20 opacity-50 cursor-not-allowed pointer-events-none"
+                    >
+                        Continuar
+                    </ButtonCTA>
+                </div>
+            </div>
+        </main>
+    </div>
+</Layout>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const tabLinks = document.querySelectorAll(".tab-link");
+        const tabSections = document.querySelectorAll(".tab-section");
+
+        const sections = document.querySelectorAll(".hud-section");
+        const navOffset = 180; // Offset for sticky nav height
+
+        // Interacción HUD: scroll suave a la sección
+        tabLinks.forEach((link) => {
+            link.addEventListener("click", (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute("data-target");
+                const targetSection = document.getElementById(targetId);
+
+                if (targetSection) {
+                    const topPos =
+                        targetSection.getBoundingClientRect().top +
+                        window.scrollY -
+                        navOffset;
+                    window.scrollTo({
+                        top: topPos,
+                        behavior: "smooth",
+                    });
+                }
+            });
+        });
+
+        // Interacción HUD: Colapsar/Expandir secciones
+        const sectionTriggers = document.querySelectorAll(".section-trigger");
+        sectionTriggers.forEach((trigger) => {
+            trigger.addEventListener("click", () => {
+                const content = trigger.nextElementSibling;
+                const chevron = trigger.querySelector(".chevron");
+
+                if (content.style.maxHeight !== "0px") {
+                    // Colapsar
+                    content.style.maxHeight = "0px";
+                    content.style.opacity = "0";
+                    content.style.marginTop = "0";
+                    chevron.classList.remove("rotate-180");
+                } else {
+                    // Expandir
+                    content.style.maxHeight = "2000px";
+                    content.style.opacity = "1";
+                    content.style.marginTop = "1.5rem"; // mt-6
+                    chevron.classList.add("rotate-180");
+                }
+            });
+        });
+
+        // Observer para el Highlight Automático
+        const observerOptions = {
+            root: null,
+            rootMargin: "-200px 0px -60% 0px",
+            threshold: 0,
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.id;
+                    tabLinks.forEach((l) => {
+                        l.classList.remove(
+                            "text-amber",
+                            "active-tab",
+                            "font-bold",
+                        );
+                        l.classList.add("text-cement/60", "font-semibold");
+                        if (l.getAttribute("data-target") === id) {
+                            l.classList.remove(
+                                "text-cement/60",
+                                "font-semibold",
+                            );
+                            l.classList.add(
+                                "text-amber",
+                                "active-tab",
+                                "font-bold",
+                            );
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach((section) => observer.observe(section));
+
+        // --- Shopping Cart Logic ---
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        const desktopCartItems = document.getElementById("desktop-cart-items");
+        const desktopCartEmpty = document.getElementById("desktop-cart-empty");
+        const desktopServicesCount = document.getElementById(
+            "desktop-services-count",
+        );
+        const desktopSummaryTime = document.getElementById(
+            "desktop-summary-time",
+        );
+        const desktopSummaryPrice = document.getElementById(
+            "desktop-summary-price",
+        );
+        const desktopSummaryPoints = document.getElementById(
+            "desktop-summary-points",
+        );
+        const desktopClearBtn = document.getElementById("desktop-clear-btn");
+        const desktopSummaryBtn = document.getElementById(
+            "desktop-summary-btn",
+        );
+
+        const mobileServicesCount = document.getElementById(
+            "mobile-services-count",
+        );
+        const mobileSummaryPrice = document.getElementById(
+            "mobile-summary-price",
+        );
+        const mobileSummaryBtn = document.getElementById("mobile-summary-btn");
+
+        let cart = [];
+
+        function updateCart() {
+            cart = [];
+            checkboxes.forEach((cb) => {
+                if (cb.checked) {
+                    let name, price, time;
+                    if (cb.dataset.name) {
+                        name = cb.dataset.name;
+                        price = parseFloat(cb.dataset.price || "0");
+                        time = parseInt(cb.dataset.duration || "0");
+                    } else {
+                        const card = cb.closest(".group");
+                        name = card.querySelector("h4").textContent.trim();
+                        const priceText = card.querySelector(".font-display.font-bold.text-carbon.text-lg:not(h4)")?.textContent.trim() || "$0";
+                        const timeText = card.querySelector("span.text-\\[10px\\]")?.textContent.trim() || "0 MIN";
+                        price = parseFloat(priceText.replace("$", ""));
+                        time = parseInt(timeText.replace(" MIN", ""));
+                    }
+                    cart.push({ name, price, time });
+                }
+            });
+            renderCart();
+        }
+
+        function renderCart() {
+            let totalTime = 0;
+            let totalPrice = 0;
+
+            if (cart.length === 0) {
+                // Empty state
+                if (desktopCartItems) {
+                    desktopCartItems.innerHTML =
+                        '<div id="desktop-cart-empty" class="text-sm text-cement/70 italic text-center py-4">Aún no has seleccionado ningún servicio.</div>';
+                }
+                updateTotals(0, 0, 0);
+            } else {
+                // Populate List
+                if (desktopCartItems) {
+                    desktopCartItems.innerHTML = "";
+                    cart.forEach((item) => {
+                        totalTime += item.time;
+                        totalPrice += item.price;
+
+                        const itemPriceHtml = item.price > 0 
+                            ? `$${item.price.toFixed(2)}` 
+                            : `<span class="text-xs">Cotizar</span>`;
+
+                        const itemHtml = `
+                            <div class="flex items-center justify-between gap-3 text-sm">
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-carbon text-[15px] truncate">${item.name}</p>
+                                    <p class="text-[11px] text-cement/70 font-medium mt-0.5">${item.time > 0 ? item.time + ' min' : 'Tiempo variable'}</p>
+                                </div>
+                                <div class="font-bold text-carbon text-[15px] text-right whitespace-nowrap">
+                                    ${itemPriceHtml}
+                                </div>
+                            </div>
+                        `;
+                        desktopCartItems.insertAdjacentHTML(
+                            "beforeend",
+                            itemHtml,
+                        );
+                    });
+                }
+                updateTotals(cart.length, totalTime, totalPrice);
+            }
+        }
+
+        function updateTotals(count, time, price) {
+            const hasCotizacion = cart.some(i => i.price === 0);
+            const formatPrice = hasCotizacion && price === 0 
+                ? "Cotización" 
+                : hasCotizacion 
+                    ? `$${price.toFixed(2)} +` 
+                    : `$${price.toFixed(2)}`;
+            const pointCalc = Math.floor(price * 0.1); // 10% points for known prices
+
+            // Desktop
+            if (desktopServicesCount)
+                desktopServicesCount.textContent = `${count} servicio${count !== 1 ? "s" : ""} seleccionado${count !== 1 ? "s" : ""}`;
+            if (desktopSummaryTime)
+                desktopSummaryTime.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock w-4 h-4 text-amber"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${time} min`;
+            if (desktopSummaryPrice)
+                desktopSummaryPrice.textContent = formatPrice;
+            if (desktopSummaryPoints) {
+                if (hasCotizacion && price === 0) {
+                    desktopSummaryPoints.textContent = 'Puntos variables';
+                } else {
+                    desktopSummaryPoints.textContent = `+${pointCalc} Puntos`;
+                }
+            }
+
+            // Buttons Desktop
+            if (desktopSummaryBtn) {
+                if (count > 0) {
+                    desktopSummaryBtn.removeAttribute("disabled");
+                    desktopSummaryBtn.classList.remove(
+                        "opacity-50",
+                        "cursor-not-allowed",
+                        "pointer-events-none",
+                    );
+                } else {
+                    desktopSummaryBtn.setAttribute("disabled", "true");
+                    desktopSummaryBtn.classList.add(
+                        "opacity-50",
+                        "cursor-not-allowed",
+                        "pointer-events-none",
+                    );
+                }
+            }
+
+            // Mobile
+            if (mobileServicesCount)
+                mobileServicesCount.textContent = `Total (${count} servicio${count !== 1 ? "s" : ""})`;
+            if (mobileSummaryPrice)
+                mobileSummaryPrice.textContent = formatPrice;
+            if (mobileSummaryBtn) {
+                if (count > 0) {
+                    mobileSummaryBtn.removeAttribute("disabled");
+                    mobileSummaryBtn.classList.remove(
+                        "opacity-50",
+                        "cursor-not-allowed",
+                        "pointer-events-none",
+                    );
+                } else {
+                    mobileSummaryBtn.setAttribute("disabled", "true");
+                    mobileSummaryBtn.classList.add(
+                        "opacity-50",
+                        "cursor-not-allowed",
+                        "pointer-events-none",
+                    );
+                }
+            }
+        }
+
+        function updateCancelledVisuals() {
+        const activeGroups = new Set();
+        checkboxes.forEach(cb => {
+            if (cb.checked && cb.dataset.group && cb.dataset.group !== 'null' && cb.dataset.group !== '') {
+                activeGroups.add(cb.dataset.group);
+            }
+        });
+
+        checkboxes.forEach((cb) => {
+            const groupEl = cb.closest('.group');
+            const slider = groupEl.querySelector('.slider');
+
+            let isCancelled = false;
+            // Si el item tiene grupo y su grupo ya esta seleccionado (por otro item), se cancela visualmente.
+            // Asi mismo, si queremos permitir un solo click, podemos dejarlo o marcarlo gris
+            if (!cb.checked && cb.dataset.group && cb.dataset.group !== 'null' && activeGroups.has(cb.dataset.group)) {
+                 isCancelled = true;
+            }
+
+            if (isCancelled) {
+                slider.classList.add('cancelled');
+                slider.classList.remove('upsell');
+            } else {
+                slider.classList.remove('cancelled', 'upsell');
+            }
+        });
+
+        const badge = document.getElementById('upsell-badge');
+        if (badge) {
+            badge.classList.add('hidden');
+            badge.classList.remove('flex');
+        }
+    }
+
+    function applyExclusivityRules(changedCheckbox) {
+        if (!changedCheckbox.checked) {
+            updateCancelledVisuals();
+            return;
+        }
+
+        if (changedCheckbox.dataset.group && changedCheckbox.dataset.group !== 'null' && changedCheckbox.dataset.group !== '') {
+            const currentGroup = changedCheckbox.dataset.group;
+            checkboxes.forEach((cb) => {
+                if (cb !== changedCheckbox && cb.checked && cb.dataset.group === currentGroup) {
+                    cb.checked = false;
+                }
+            });
+        }
+        
+        updateCancelledVisuals();
+    }
+
+    checkboxes.forEach((cb) => {
+            cb.addEventListener("change", (e) => {
+                applyExclusivityRules(e.target);
+                updateCart();
+            });
+        });
+
+        if (desktopClearBtn) {
+            desktopClearBtn.addEventListener("click", () => {
+                checkboxes.forEach((cb) => (cb.checked = false));
+                updateCancelledVisuals();
+                updateCart();
+            });
+        }
+
+        // --- Sidebar Barber Selection Logic ---
+        const sidebarBarberRadios = document.querySelectorAll(
+            'input[name="barber_selection_sidebar"]',
+        );
+
+        sidebarBarberRadios.forEach((radio) => {
+            radio.addEventListener("change", () => {
+                document
+                    .querySelectorAll(".barber-sidebar-option")
+                    .forEach((opt) => {
+                        opt.classList.remove("border-amber", "bg-amber/5");
+                        opt.classList.add("border-cement/10", "bg-white");
+
+                        const ring = opt.querySelector(".w-5.h-5");
+                        if (ring) {
+                            ring.classList.remove("border-amber");
+                            ring.classList.add("border-cement/30");
+                        }
+
+                        const checkInner = opt.querySelector(
+                            ".sidebar-check-inner",
+                        );
+                        if (checkInner)
+                            checkInner.classList.remove("scale-100");
+                        if (checkInner) checkInner.classList.add("scale-0");
+                    });
+
+                if (radio.checked) {
+                    const parent = radio.closest(".barber-sidebar-option");
+                    parent.classList.remove("border-cement/10", "bg-white");
+                    parent.classList.add("border-amber", "bg-amber/5");
+
+                    const ring = parent.querySelector(".w-5.h-5");
+                    if (ring) {
+                        ring.classList.remove("border-cement/30");
+                        ring.classList.add("border-amber");
+                    }
+
+                    const checkInner = parent.querySelector(
+                        ".sidebar-check-inner",
+                    );
+                    if (checkInner) checkInner.classList.remove("scale-0");
+                    if (checkInner) checkInner.classList.add("scale-100");
+                }
+            });
+        });
+
+        // Continue Button Handlers
+        desktopSummaryBtn.addEventListener("click", (e) => {
+            if (!desktopSummaryBtn.classList.contains("cursor-not-allowed")) {
+                e.preventDefault();
+                window.location.href = "/fecha";
+            }
+        });
+
+        mobileSummaryBtn.addEventListener("click", (e) => {
+            if (!mobileSummaryBtn.classList.contains("cursor-not-allowed")) {
+                e.preventDefault();
+                window.location.href = "/fecha";
+            }
+        });
+
+        // Initial render
+        updateCart();
+    });
+</script>
+
+<style>
+    /* Tab Link Hover Effect (Uiverse.io inspired) */
+    .tab-link {
+        position: relative;
+        transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+        transition-duration: 400ms;
+        transition-property: color;
+    }
+
+    .tab-link:focus-visible,
+    .tab-link:hover,
+    .tab-link.active-tab {
+        color: #a67c52 !important; /* amber color on hover/active */
+    }
+
+    .tab-link:focus-visible:after,
+    .tab-link:hover:after,
+    .tab-link.active-tab:after {
+        width: 100%;
+        left: 0%;
+    }
+
+    .tab-link:after {
+        content: "";
+        pointer-events: none;
+        bottom: -2px;
+        left: 50%;
+        position: absolute;
+        width: 0%;
+        height: 2px;
+        background-color: #a67c52;
+        transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+        transition-duration: 400ms;
+        transition-property: width, left;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    /* From Uiverse.io by gharsh11032000 - Adapted for Barberia 99 */
+    .switch {
+        font-size: 17px;
+        position: relative;
+        display: inline-block;
+        width: 3.5em;
+        height: 2em;
+    }
+
+    .switch input[type="checkbox"] {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        inset: 0;
+        border: 2px solid #d4d4d4;
+        background-color: #f5f5f5;
+        border-radius: 50px;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        overflow: hidden;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 1.4em;
+        width: 1.4em;
+        left: 0.15em;
+        bottom: 0.15em;
+        background-color: white;
+        border-radius: inherit;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        z-index: 2;
+    }
+
+    .switch input[type="checkbox"]:checked + .slider {
+        box-shadow: 0 0 15px rgba(166, 124, 82, 0.5);
+        border: 2px solid #a67c52;
+        background-color: #a67c52;
+    }
+
+    .switch input[type="checkbox"]:checked + .slider:after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.6) 50%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        transform: skewX(-20deg);
+        animation: shiny-sweep 0.6s ease-out;
+        z-index: 1;
+    }
+
+    @keyframes shiny-sweep {
+        0% {
+            left: -100%;
+        }
+        100% {
+            left: 200%;
+        }
+    }
+
+    .switch input[type="checkbox"]:checked + .slider:before {
+        transform: translateX(1.5em);
+    }
+
+    .slider-icon {
+        display: none;
+    }
+
+    /* Cancelled state (overridden by mutual exclusivity) */
+    .slider.cancelled {
+        border: 2px solid #e5e5e5;
+        background-color: #2c2c2c;
+    }
+
+    .slider.cancelled:before {
+        background-color: #6a6a6a;
+        box-shadow: none;
+    }
+
+    /* Upsell shiny state */
+    .slider.upsell {
+        border: 2px solid #d4af37;
+        background-color: rgba(212, 175, 55, 0.15);
+        animation: pulse-gold 2s infinite;
+    }
+
+    .slider.upsell:before {
+        background-color: #d4af37;
+        box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+    }
+
+    @keyframes pulse-gold {
+        0% {
+            box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(212, 175, 55, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);
+        }
+    }
+
+    .logo-glow {
+        filter: drop-shadow(0 0 15px rgba(166, 124, 82, 0.6));
+    }
+</style>

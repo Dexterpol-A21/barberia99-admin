@@ -1,0 +1,8 @@
+/* Zodiak Bold - Self Hosted */
+@font-face {
+    font-family: 'Zodiak';
+    src: url('/fonts/Zodiak-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}

@@ -1,0 +1,190 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-carbon: #121212;
+  --color-bone: #F5F5F5;
+  --color-amber: #A67C52;
+  --color-cement: #4A4A4A;
+
+  --font-display: 'Zodiak', serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-bone);
+  color: var(--color-carbon);
+}
+
+/* Global Button Styles (Design System) */
+.btn-cta {
+  --clr-font-main: hsla(0 0% 20% / 100);
+  --btn-bg-1: #d4a775;
+  /* Lighter Amber */
+  --btn-bg-2: #A67C52;
+  /* Brand Amber */
+  --btn-bg-color: hsla(360 100% 100% / 1);
+  --radii: 0.2rem;
+
+  cursor: pointer;
+  /* padding: 0.9em 1.4em; - Handled by Tailwind classes usually, but good for default */
+  min-width: 120px;
+  min-height: 44px;
+  font-size: var(--size, 1rem);
+  font-weight: 700;
+  transition: 0.8s;
+  background-size: 280% auto;
+  background-image: linear-gradient(325deg,
+      var(--btn-bg-2) 0%,
+      var(--btn-bg-1) 55%,
+      var(--btn-bg-2) 90%);
+  border: none;
+  border-radius: var(--radii);
+  color: var(--btn-bg-color);
+  box-shadow:
+    0px 0px 20px rgba(166, 124, 82, 0.5),
+    /* Amber glow */
+    0px 5px 5px -1px rgba(166, 124, 82, 0.25),
+    inset 4px 4px 8px rgba(255, 255, 255, 0.2),
+    inset -4px -4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-cta:hover {
+  background-position: right top;
+  color: white;
+  /* Ensure text stays white */
+}
+
+.btn-cta:is(:focus, :focus-visible, :active) {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--btn-bg-color),
+    0 0 0 6px var(--btn-bg-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-cta {
+    transition: linear;
+  }
+}
+
+/* Secondary Button Options (Test Phase) */
+
+/* Secondary Button (Black Flash / Stealth Shine) */
+.btn-secondary {
+  position: relative;
+  /* padding: 10px 20px; Removed fixed padding to rely on flex centering or explicit height */
+  border-radius: 4px;
+  font-size: 1rem;
+  /* height: 50px; Match primary button height typically around 3rem+padding */
+  min-height: 44px;
+  /* Ensure minimum touch target */
+  padding: 0 20px;
+  /* Horizontal padding only */
+
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #fff;
+
+  /* Dark Glass Base */
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+
+  overflow: hidden;
+  transition: all 0.2s ease-in;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-secondary:hover {
+  background: #000000;
+  /* Solid Black */
+  border-color: #333;
+  /* Dark/Shadow Glow */
+  box-shadow: 0 0 20px 5px rgba(0, 0, 0, 0.8);
+  transition: all 0.2s ease-out;
+}
+
+/* Shine Animation (White Flash) */
+.btn-secondary:hover::before {
+  animation: sh02 0.5s 0s linear;
+}
+
+.btn-secondary::before {
+  content: '';
+  display: block;
+  width: 0px;
+  height: 86%;
+  position: absolute;
+  top: 7%;
+  left: 0%;
+  opacity: 0;
+  background: rgba(255, 255, 255, 0.8);
+  /* Strong White Flash */
+  box-shadow: 0 0 50px 30px rgba(255, 255, 255, 0.8);
+  transform: skewX(-20deg);
+}
+
+@keyframes sh02 {
+  from {
+    opacity: 0;
+    left: 0%;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    left: 100%;
+  }
+}
+
+.btn-secondary:active {
+  box-shadow: 0 0 0 0 transparent;
+  transition: box-shadow 0.2s ease-in;
+}
+
+/* Universal Shiny Card Effect */
+.shiny-card-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shiny-card-effect::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.15),
+      transparent);
+  transition: left 0.4s ease;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.shiny-card-effect:hover::before {
+  left: 100%;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+}

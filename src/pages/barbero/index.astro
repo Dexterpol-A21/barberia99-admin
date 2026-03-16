@@ -1,0 +1,47 @@
+---
+import BarberoLayout from "../../layouts/BarberoLayout.astro";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import ButtonCTA from "../../components/ui/ButtonCTA.astro";
+---
+
+<BarberoLayout title="Agenda | Barbería 99">
+    <div class="w-full mx-auto space-y-6">
+        <h1 class="hidden">Agenda de Citas</h1>
+
+        <!-- Toolbar de Navegación del Calendario -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex items-center gap-2">
+                <button class="bg-carbon/60 hover:bg-white/10 text-cement hover:text-white border border-white/10 w-10 h-10 rounded-sm flex items-center justify-center transition-colors">
+                    <ChevronLeft size={18} />
+                </button>
+                <div class="bg-carbon/60 border border-white/10 h-10 px-4 rounded-sm flex items-center justify-center min-w-[200px]">
+                    <p class="text-white text-sm font-medium">8 de Marzo, 2026</p>
+                </div>
+                <button class="bg-carbon/60 hover:bg-white/10 text-cement hover:text-white border border-white/10 w-10 h-10 rounded-sm flex items-center justify-center transition-colors">
+                    <ChevronRight size={18} />
+                </button>
+                <button class="bg-carbon/60 hover:bg-white/10 text-cement hover:text-white border border-white/10 h-10 px-3 ml-2 rounded-sm text-sm transition-colors hidden sm:block">
+                    Hoy
+                </button>
+            </div>
+            
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="bg-carbon/60 border border-white/10 rounded-sm p-1 flex">
+                    <button class="px-3 py-1 bg-white/10 text-white rounded-[1px] text-xs font-medium">Día</button>
+                    <button class="px-3 py-1 text-cement hover:text-white rounded-[1px] text-xs transition-colors">Semana</button>
+                </div>
+                <ButtonCTA class="!h-10 !px-4 !text-sm !w-auto !min-w-0 !font-semibold">
+                    + Nueva Cita
+                </ButtonCTA>
+            </div>
+        </div>
+
+        <!-- Contenedor Principal (Calendario) -->
+        <div class="bg-carbon/60 border border-white/5 rounded-sm backdrop-blur-sm p-0 overflow-hidden">
+            <div class="flex items-center justify-center p-6 h-[65vh] border border-white/10 border-dashed rounded-sm m-6">
+                <div class="flex flex-col items-center gap-3 opacity-50">
+                    <CalendarIcon size={32} class="text-amber" />
+                    <p class="text-cement text-sm font-mono">[ Calendario de citas irá aquí ]</p>
+                </div>
+    </div>
+</BarberoLayout>

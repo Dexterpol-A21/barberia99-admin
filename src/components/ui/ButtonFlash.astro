@@ -1,0 +1,112 @@
+---
+/**
+ * ButtonFlash - Dark glass button with a white flash animation on hover.
+ * Style: Semitransparent dark background + white light sweep. Used for "Nuestros Servicios" and the profile icon.
+ *
+ * Props:
+ *   href       (string)  - The link destination.
+ *   iconOnly   (boolean) - If true, renders as a small square (44x44) for icon-only use.
+ *   class      (string)  - Optional extra Tailwind classes.
+ */
+interface Props {
+    href: string;
+    iconOnly?: boolean;
+    class?: string;
+}
+
+const { href, iconOnly = false, class: className = "" } = Astro.props;
+---
+
+<a
+    href={href}
+    class={`btn-flash ${iconOnly ? "btn-flash-icon" : ""} ${className}`}
+>
+    <slot />
+</a>
+
+<style>
+    .btn-flash {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+
+        /* Base: Dark Glass */
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+
+        /* Text */
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        text-decoration: none;
+
+        border-radius: 4px;
+        overflow: hidden;
+        transition: all 0.2s ease-in;
+
+        /* Default dimensions (matches Hero "Nuestros Servicios") */
+        min-height: 44px;
+        padding: 0 20px;
+    }
+
+    /* Icon-only variant (for profile button) */
+    .btn-flash-icon {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        min-height: unset;
+    }
+
+    .btn-flash:hover {
+        background: #000000;
+        border-color: #333;
+        box-shadow: 0 0 20px 5px rgba(0, 0, 0, 0.8);
+        color: #fff;
+        transition: all 0.2s ease-out;
+    }
+
+    /* White Flash sweep animation */
+    .btn-flash::before {
+        content: "";
+        display: block;
+        width: 0px;
+        height: 86%;
+        position: absolute;
+        top: 7%;
+        left: 0%;
+        opacity: 0;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 50px 30px rgba(255, 255, 255, 0.8);
+        transform: skewX(-20deg);
+    }
+
+    .btn-flash:hover::before {
+        animation: flash-sweep 0.5s 0s linear;
+    }
+
+    @keyframes flash-sweep {
+        from {
+            opacity: 0;
+            left: 0%;
+        }
+        50% {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+            left: 100%;
+        }
+    }
+
+    .btn-flash:active {
+        box-shadow: 0 0 0 0 transparent;
+        transition: box-shadow 0.2s ease-in;
+    }
+</style>

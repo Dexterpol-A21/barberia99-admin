@@ -1,0 +1,175 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ButtonCTA from "../components/ui/ButtonCTA.astro";
+import { Lock, User, CheckCircle } from "lucide-react";
+---
+
+<Layout title="Completar Perfil | Barbería 99" hideFooter={true}>
+    <div class="min-h-screen bg-carbon flex flex-col justify-center items-center p-4 relative overflow-hidden">
+        
+        <!-- Elementos decorativos de fondo -->
+        <div class="absolute top-0 right-0 w-96 h-96 bg-amber/5 rounded-full blur-[120px] pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-amber/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+        <div class="w-full max-w-md bg-[#0a0a0a] border border-white/5 rounded-lg p-8 relative z-10 shadow-2xl">
+            
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-display text-white mb-2">Completar Registro</h1>
+                <p class="text-sm text-cement" id="user-greeting">Configura tu perfil para acceder a The Barber App.</p>
+            </div>
+
+            <!-- Loader Inicial -->
+            <div id="loading-state" class="flex flex-col items-center justify-center py-8">
+                <div class="w-8 h-8 border-2 border-amber border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p class="text-sm text-cement">Verificando invitación...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-state" class="hidden flex-col items-center justify-center py-8 text-center">
+                <p class="text-red-500 mb-4">El enlace de invitación es inválido o ha expirado.</p>
+                <a href="/" class="text-amber hover:underline text-sm">Volver al inicio</a>
+            </div>
+
+            <!-- Formulario de Onboarding -->
+            <form id="onboarding-form" class="hidden space-y-5">
+                
+                <div>
+                    <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2">Nombre Completo</label>
+                    <div class="relative flex items-center">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
+                        <input type="text" id="fullname" required placeholder="Ej. Juan Pérez" class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-white/30 focus:border-amber focus:outline-none transition-colors" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2">Crear Contraseña</label>
+                    <div class="relative flex items-center">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
+                        <input type="password" id="password" required minlength="6" placeholder="Mínimo 6 caracteres" class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-white/30 focus:border-amber focus:outline-none transition-colors" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2">Confirmar Contraseña</label>
+                    <div class="relative flex items-center">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
+                        <input type="password" id="password-confirm" required minlength="6" placeholder="Repite tu contraseña" class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-white/30 focus:border-amber focus:outline-none transition-colors" />
+                    </div>
+                    <p id="password-error" class="hidden text-red-500 text-xs mt-2">Las contraseñas no coinciden.</p>
+                </div>
+
+                <div class="pt-4">
+                    <ButtonCTA isSubmit={true} class="!w-full !justify-center !h-12">
+                        Guardar y Entrar
+                    </ButtonCTA>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Script de lógica con Supabase -->
+    <script>
+        import { supabase } from '../lib/supabase';
+
+        const loadingState = document.getElementById('loading-state');
+        const errorState = document.getElementById('error-state');
+        const form = document.getElementById('onboarding-form');
+        
+        const passwordInput = document.getElementById('password') as HTMLInputElement;
+        const confirmInput = document.getElementById('password-confirm') as HTMLInputElement;
+        const fullnameInput = document.getElementById('fullname') as HTMLInputElement;
+        const passwordError = document.getElementById('password-error');
+        const greeting = document.getElementById('user-greeting');
+
+        // Al cargar la vista, verificamos si hay sesión (Supabase ya debería haberla cachado desde el hash de la URL #access_token=...)
+        document.addEventListener("DOMContentLoaded", async () => {
+            
+            // Forzar obtener la sesión recién parseada
+            const { data: { session }, error } = await supabase.auth.getSession();
+
+            if (!loadingState || !errorState || !form) return;
+
+            if (error || !session) {
+                loadingState.classList.add('hidden');
+                errorState.classList.remove('hidden');
+                errorState.classList.add('flex');
+                return;
+            }
+
+            // Tenemos usuario
+            const user = session.user;
+            
+            // Si el user ya tiene metadata proveniente de la invitación
+            if (user?.user_metadata?.nickname && greeting) {
+                greeting.textContent = `Hola ${user.user_metadata.nickname}, completa tu cuenta para empezar.`;
+            }
+
+            // Mostrar el formulario
+            loadingState.classList.add('hidden');
+            form.classList.remove('hidden');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                if (passwordInput.value !== confirmInput.value) {
+                    if (passwordError) passwordError.classList.remove('hidden');
+                    return;
+                }
+                
+                if (passwordError) passwordError.classList.add('hidden');
+
+                const btnSubmit = form.querySelector('button[type="submit"]');
+                const originalText = btnSubmit?.innerHTML || '';
+                
+                if (btnSubmit) {
+                    btnSubmit.innerHTML = 'Guardando...';
+                    btnSubmit.setAttribute('disabled', 'true');
+                }
+
+                try {
+                    // Actualizar contraseña y nombre del usuario en metadata
+                    const { error: updateError } = await supabase.auth.updateUser({
+                        password: passwordInput.value,
+                        data: {
+                            full_name: fullnameInput.value
+                        }
+                    });
+
+                    if (updateError) throw updateError;
+
+                    // Averiguar el rol del usuario (desde metadata o perfiles)
+                    const { data: { user } } = await supabase.auth.getUser();
+                    let redirectUrl = '/dashboard'; // Por defecto
+
+                    if (user?.user_metadata?.role === 'barber') {
+                        redirectUrl = '/barbero';
+                    } else if (user) {
+                        const { data: profile } = await supabase
+                            .from('profiles')
+                            .select('role')
+                            .eq('id', user.id)
+                            .single();
+                        if (profile?.role === 'barber') {
+                            redirectUrl = '/barbero';
+                        }
+                    }
+
+                    btnSubmit!.innerHTML = '<span class="flex items-center gap-2"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> ¡Listo! Redirigiendo...</span>';
+                    
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 1500);
+
+                } catch (err: any) {
+                    console.error("Error al actualizar perfil:", err);
+                    alert("Ocurrió un error: " + err.message);
+                    if (btnSubmit) {
+                        btnSubmit.innerHTML = originalText;
+                        btnSubmit.removeAttribute('disabled');
+                    }
+                }
+            });
+        });
+    </script>
+</Layout>

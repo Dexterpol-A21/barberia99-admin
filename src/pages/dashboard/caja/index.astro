@@ -1,0 +1,234 @@
+---
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
+import { Download, Calendar } from "lucide-react";
+import ButtonCTA from "../../../components/ui/ButtonCTA.astro";
+---
+
+<DashboardLayout title="Corte de Caja | Barbería 99">
+    <div class="w-full mx-auto space-y-6">
+        <h1 class="hidden">Corte de Caja</h1>
+
+        <!-- Toolbar de Rango de Fechas -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex items-center gap-2">
+                <button id="btnDateToday" class="bg-carbon/60 hover:bg-white/10 text-cement hover:text-white border border-white/10 h-10 px-4 rounded-sm flex items-center justify-center gap-2 transition-colors text-sm">
+                    <Calendar size={16} class="text-amber" />
+                    <span id="dateLabel">Hoy</span>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <button class="bg-carbon/60 border border-white/10 text-cement hover:text-white h-10 px-4 rounded-sm transition-colors flex items-center gap-2 text-sm">
+                    <Download size={16} /> Exportar
+                </button>
+                <ButtonCTA class="!h-10 !px-4 !text-sm !w-auto !min-w-0 !font-semibold">
+                    Cerrar Caja
+                </ButtonCTA>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Resumen Financiero -->
+                <div class="bg-carbon/60 border border-white/5 rounded-sm backdrop-blur-sm p-6 lg:col-span-1 space-y-6">
+                    <div>
+                        <p class="text-xs text-cement uppercase tracking-widest font-bold mb-1">Ingreso Bruto Total</p>
+                        <p id="metricGross" class="text-3xl font-display text-white">...</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-cement uppercase tracking-widest font-bold mb-1">Comisiones a Pagar (Aprox)</p>
+                        <p id="metricCommissions" class="text-3xl font-display text-amber">...</p>
+                    </div>
+                    <div class="pt-4 border-t border-white/5">
+                        <p class="text-xs text-cement uppercase tracking-widest font-bold mb-1">Ganancia Neta (Dueño)</p>
+                        <p id="metricNet" class="text-3xl font-display text-green-400">...</p>
+                    </div>
+                </div>
+
+                <!-- Gráfico Reservado -->
+                <div class="bg-carbon/60 border border-white/5 rounded-sm backdrop-blur-sm p-6 lg:col-span-2 flex flex-col">
+                    <div class="mb-4">
+                        <h3 class="font-display text-lg text-white">Ingresos de la Semana</h3>
+                    </div>
+                    <div class="flex-1 min-h-[300px] flex items-center justify-center border border-transparent">
+                        <ul class="flex w-full justify-between items-end h-[250px] opacity-60 px-4" id="simpleChartCajaMock"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Barberos vs Cuotas -->
+            <div class="bg-carbon/60 border border-white/5 rounded-sm backdrop-blur-sm p-6 overflow-hidden">
+                <div class="mb-6">
+                    <h3 class="font-display text-lg text-white">Desglose por Barbero</h3>
+                    <p class="text-xs text-cement mt-1">Estimación basada en esquema 50/50.</p>
+                </div>
+
+                <div class="w-full overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-white/10 text-xs uppercase tracking-widest text-cement">
+                                <th class="pb-3 font-semibold min-w-[200px]">Barbero</th>
+                                <th class="pb-3 font-semibold text-center">Cortes Completados</th>
+                                <th class="pb-3 font-semibold text-center">Ingreso Generado</th>
+                                <th class="pb-3 font-semibold text-right">Comisión Sugerida</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm" id="cajaTableBody">
+                            <tr class="border-b border-white/5 group hover:bg-white/5 transition-colors">
+                                <td class="py-6 text-white font-medium text-center" colspan="4 animate-pulse">Cargando datos de caja...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</DashboardLayout>
+
+<script>
+    import { supabase } from "../../../lib/supabase";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+            // Actualizar Label de Fecha
+            const label = document.getElementById('dateLabel');
+            if (label) {
+                const dayName = now.toLocaleDateString('es-ES', { weekday: 'long' });
+                const monthName = now.toLocaleDateString('es-ES', { month: 'long' });
+                label.innerText = `Hoy: ${now.getDate()} de ${monthName}`;
+            }
+
+            // Fetch completed appointments for today and last 7 days chart
+            const weekAgo = new Date(now);
+            weekAgo.setDate(now.getDate() - 6);
+            const weekAgoStr = `${weekAgo.getFullYear()}-${String(weekAgo.getMonth() + 1).padStart(2, '0')}-${String(weekAgo.getDate()).padStart(2, '0')}`;
+
+            const { data: apps, error: appError } = await supabase
+                .from('appointments')
+                .select(`id, appointment_date, status, price, barber_id, barbers(nickname)`)
+                .gte('appointment_date', weekAgoStr)
+                .in('status', ['completed', 'completada']);
+
+            if (appError) throw appError;
+
+            // Fetch barbers (all, so we can list even if they have 0 cuts)
+            const { data: barbers, error: barberError } = await supabase
+                .from('barbers')
+                .select('id, nickname');
+            
+            if (barberError) throw barberError;
+
+            // Data for chart (last 7 days)
+            const weeklyIncome = [0, 0, 0, 0, 0, 0, 0];
+            const weeklyLabels = [];
+            
+            for(let i=0; i<7; i++) {
+                let d = new Date(weekAgo);
+                d.setDate(weekAgo.getDate() + i);
+                weeklyLabels.push(['Dom','Lun','Mar','Mie','Jue','Vie','Sab'][d.getDay()]);
+            }
+
+            let ingresoBruto = 0;
+            const barberStats = {};
+            
+            barbers.forEach(b => {
+                barberStats[b.id] = { nickname: b.nickname, count: 0, revenue: 0 };
+            });
+
+            apps.forEach(a => {
+                const price = Number(a.price) || 0;
+                
+                // Chart calculations
+                const dParts = a.appointment_date.split('-');
+                const aDate = new Date(dParts[0], dParts[1]-1, dParts[2]);
+                const diffTime = Math.abs(aDate - weekAgo);
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                if(diffDays >= 0 && diffDays < 7) {
+                    weeklyIncome[diffDays] += price;
+                }
+
+                // Today calculations for caja
+                if (a.appointment_date === todayStr) {
+                    ingresoBruto += price;
+
+                    if (a.barber_id && barberStats[a.barber_id]) {
+                        barberStats[a.barber_id].count += 1;
+                        barberStats[a.barber_id].revenue += price;
+                    }
+                }
+            });
+
+            // Asumimos un 50/50 universal por ahora
+            const comisiones = ingresoBruto * 0.50;
+            const gananciaNeta = ingresoBruto - comisiones;
+
+            // Actualizar UI
+            document.getElementById('metricGross').innerText = `$${ingresoBruto.toLocaleString()}`;
+            document.getElementById('metricCommissions').innerText = `$${comisiones.toLocaleString()}`;
+            document.getElementById('metricNet').innerText = `$${gananciaNeta.toLocaleString()}`;
+
+            // Generar Tabla
+            const tableBody = document.getElementById('cajaTableBody');
+            
+            let tableHTML = '';
+            Object.values(barberStats)
+                .sort((a, b) => b.revenue - a.revenue) // ordenar por mayores ingresos
+                .forEach(b => {
+                    const commission = b.revenue * 0.50; // el 50%
+                    
+                    tableHTML += `
+                        <tr class="border-b border-white/5 group hover:bg-white/5 transition-colors">
+                            <td class="py-4 text-white font-medium flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-[#A67C52] text-[10px] flex items-center justify-center uppercase shrink-0">
+                                    ${b.nickname.charAt(0)}
+                                </div>
+                                <span class="capitalize">${b.nickname}</span>
+                            </td>
+                            <td class="py-4 text-center text-white">${b.count} <span class="text-xs text-cement">cortes</span></td>
+                            <td class="py-4 text-center text-amber">$${b.revenue.toLocaleString()}</td>
+                            <td class="py-4 text-right text-green-400 font-mono font-medium">$${commission.toLocaleString()}</td>
+                        </tr>
+                    `;
+            });
+
+            if(tableHTML === '') {
+                tableHTML = `<tr><td colspan="4" class="py-8 text-center text-cement text-sm">No hay actividad hoy.</td></tr>`;
+            }
+
+            if(tableBody) tableBody.innerHTML = tableHTML;
+
+            // Real Chart Builder para relleno
+            const chart = document.getElementById('simpleChartCajaMock');
+            if(chart) {
+                let maxIncome = Math.max(...weeklyIncome);
+                if (maxIncome === 0) maxIncome = 1;
+                
+                let chartHtml = '';
+                for(let i=0; i<7; i++) {
+                    const h = (weeklyIncome[i] / maxIncome) * 100;
+                    const finalH = h < 2 ? 2 : h; 
+                    const isTodayMock = i === 6; // El último día de los 7 calculados es hoy
+                    
+                    chartHtml += `
+                        <li class="w-full flex justify-center group relative h-full items-end pb-8" title="$${weeklyIncome[i].toLocaleString()}">
+                            <div class="w-1/3 rounded-t-sm transition-all duration-300 ${isTodayMock ? 'bg-amber' : 'bg-white/10 group-hover:bg-amber/50'}" style="height: ${finalH}%"></div>
+                            <span class="absolute bottom-0 text-[10px] text-cement uppercase font-mono">${weeklyLabels[i]}</span>
+                            <div class="absolute bottom-[calc(${finalH}%+2rem)] opacity-0 group-hover:opacity-100 transition-opacity bg-carbon border border-white/10 text-white text-[10px] px-2 py-1 rounded w-max z-10 pointer-events-none mb-1">
+                                $${weeklyIncome[i].toLocaleString()}
+                            </div>
+                        </li>
+                    `;
+                }
+                chart.innerHTML = chartHtml;
+            }
+
+        } catch (error) {
+            console.error('Data error:', error);
+            const tb = document.getElementById('cajaTableBody');
+            if(tb) tb.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-red-400 text-sm">Error conectando a la base de datos de ingresos.</td></tr>`;
+        }
+    });
+</script>

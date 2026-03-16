@@ -1,0 +1,674 @@
+---
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, CheckCircle, XCircle } from "lucide-react";
+import ButtonCTA from "../../../components/ui/ButtonCTA.astro";
+---
+
+<DashboardLayout title="Agenda | Barbería 99">
+    <div class="w-full mx-auto space-y-6 flex flex-col min-h-[calc(100vh-8rem)]">
+        <h1 class="hidden">Agenda de Citas</h1>
+
+        <!-- Resumen y Gráficos (Métricas Rapidas) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+            <!-- Card 1: Citas Hoy -->
+            <div class="bg-carbon/60 border border-white/5 rounded-sm p-4 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div class="flex justify-between items-start mb-1 relative z-10">
+                    <div class="text-cement text-xs uppercase tracking-wider font-medium">Citas Hoy</div>
+                    <Clock size={16} class="text-amber" />
+                </div>
+                <div class="text-4xl font-display text-white relative z-10" id="metricToday">0</div>
+                <div class="text-xs text-cement mt-auto relative z-10" id="metricTodaySub">Programadas para hoy</div>
+            </div>
+
+            <!-- Card 2: Citas Completadas -->
+            <div class="bg-carbon/60 border border-white/5 rounded-sm p-4 flex flex-col justify-between h-32 relative overflow-hidden">
+                <div class="flex justify-between items-start mb-1 relative z-10">
+                    <div class="text-cement text-xs uppercase tracking-wider font-medium">Completadas (Mes)</div>
+                    <CheckCircle size={16} class="text-green-500" />
+                </div>
+                <div class="text-4xl font-display text-white relative z-10" id="metricCompleted">0</div>
+                <div class="text-xs text-cement mt-auto relative z-10">Citas exitosas este mes</div>
+                
+                <!-- Barra de progreso miniatura -->
+                <div class="absolute bottom-0 left-0 h-1 bg-green-500/20 w-full">
+                    <div id="barCompleted" class="h-full bg-green-500 transition-all duration-1000 w-[0%]"></div>
+                </div>
+            </div>
+
+            <!-- Card 3: Cancelaciones -->
+            <div class="bg-carbon/60 border border-white/5 rounded-sm p-4 flex flex-col justify-between h-32 relative overflow-hidden">
+                <div class="flex justify-between items-start mb-1 relative z-10">
+                    <div class="text-cement text-xs uppercase tracking-wider font-medium">Canceladas (Mes)</div>
+                    <XCircle size={16} class="text-red-500" />
+                </div>
+                <div class="text-4xl font-display text-white relative z-10" id="metricCanceled">0</div>
+                <div class="text-xs text-cement mt-auto relative z-10">Citas fallidas o canceladas</div>
+                
+                <!-- Barra de progreso miniatura -->
+                <div class="absolute bottom-0 left-0 h-1 bg-red-500/20 w-full">
+                    <div id="barCanceled" class="h-full bg-red-500 transition-all duration-1000 w-[0%]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toolbar de Navegación del Calendario -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-t border-white/5 pt-4">
+            <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+                <button id="prevBtn" class="bg-carbon/60 hover:bg-white/10 text-cement hover:text-white border border-white/10 w-10 h-10 rounded-sm flex items-center justify-center transition-colors shrink-0 cursor-pointer">
+                    <ChevronLeft size={18} />
+                </button>
+                <div class="relative bg-carbon/60 hover:bg-white/5 border border-white/10 h-10 px-4 rounded-sm flex items-center justify-center min-w-[220px] shrink-0 cursor-pointer transition-colors" id="currentDateDisplay" title="Seleccionar una fecha específica">
+                    <p class="text-white text-sm font-medium" id="dateText">Cargando...</p>
+                    <input type="date" id="nativeDateInput" class="absolute w-0 h-0 opacity-0 pointer-events-none" />
+                </div>
+                <button id="nextBtn" class="bg-carbon/60 hover:bg-white/10 text-cement hover:text-white border border-white/10 w-10 h-10 rounded-sm flex items-center justify-center transition-colors shrink-0 cursor-pointer">
+                    <ChevronRight size={18} />
+                </button>
+                <button id="todayBtn" class="bg-carbon/60 hover:bg-amber/10 text-amber border border-white/10 h-10 px-4 ml-2 rounded-sm text-sm transition-colors hidden sm:block shrink-0 whitespace-nowrap cursor-pointer">
+                    Ir a Hoy
+                </button>
+            </div>
+            
+            <div class="flex items-center gap-3 w-full sm:w-auto shrink-0 mt-2 sm:mt-0">
+                <div class="bg-carbon/60 border border-white/10 rounded-sm p-1 flex">
+                    <button id="viewDayBtn" class="px-3 py-1 bg-white/10 text-white rounded-[1px] text-xs font-medium focus:outline-none transition-colors cursor-pointer">Día</button>
+                    <button id="viewWeekBtn" class="px-3 py-1 text-cement hover:text-white rounded-[1px] text-xs transition-colors cursor-pointer">Semana</button>
+                    <button id="viewMonthBtn" class="px-3 py-1 text-cement hover:text-white rounded-[1px] text-xs transition-colors cursor-pointer">Mes</button>
+                </div>
+                <ButtonCTA class="!h-10 !px-4 !text-sm !w-auto !min-w-0 !font-semibold">
+                    + Nueva Cita
+                </ButtonCTA>
+            </div>
+        </div>
+
+        <!-- Contenedor Principal (Lista / Calendario del Día) -->
+        <div class="bg-carbon/60 border border-white/5 rounded-sm backdrop-blur-sm p-0 flex-1 overflow-hidden flex flex-col min-h-[400px]">
+            <!-- Cabecera de tabla -->
+            <div class="w-full border-b border-white/5 bg-carbon/80 hidden md:grid grid-cols-[80px_1fr_1.5fr_1.5fr_120px_100px] gap-4 p-4 text-xs font-medium text-cement uppercase tracking-wider">
+                <div class="text-center">Hora</div>
+                <div>Cliente</div>
+                <div>Servicio</div>
+                <div>Barbero asignado</div>
+                <div class="text-center">Estado</div>
+                <div class="text-right">Acciones</div>
+            </div>
+
+            <!-- Contenedor Dinámico -->
+            <div id="appointmentsContainer" class="flex-1 overflow-y-auto p-2 space-y-2 relative">
+                <!-- Estado Carga -->
+                <div class="flex items-center justify-center h-full w-full absolute inset-0 text-cement text-sm">
+                    <div class="flex flex-col items-center gap-2">
+                        <Clock class="animate-spin text-amber" size={24} />
+                        Sincronizando agenda...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DETALLES (Oculto por defecto) -->
+    <div id="appointmentModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4 w-full h-full text-white">
+        <!-- Contenedor animado del modal -->
+        <div class="bg-[#111111] border border-white/10 rounded-lg w-full max-w-md overflow-hidden shadow-2xl flex flex-col transform scale-95 opacity-0 transition-all duration-300" id="appointmentModalContent">
+            
+            <!-- Barra superior -->
+            <div class="flex items-center justify-between p-4 border-b border-white/5 bg-white/5">
+                <h3 class="font-display text-lg tracking-wide">Detalles de la Cita</h3>
+                <button type="button" class="text-cement hover:text-white transition-colors cursor-pointer p-1" onclick="closeAdminModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Cuerpo del Modal -->
+            <div class="p-6 flex flex-col gap-4" id="modalBody">
+                <!-- Se inyectará dinámicamente el contenido aquí -->
+            </div>
+
+            <!-- Botonera -->
+            <div class="flex justify-end gap-3 p-4 border-t border-white/5 bg-[#0a0a0a]" id="modalFooter">
+                <button type="button" class="px-4 py-2 rounded-[2px] border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-all text-sm cursor-pointer" onclick="closeAdminModal()">
+                    Cerrar
+                </button>
+                <!-- El botón de cancelar se inyectará dinámicamente si aplica -->
+            </div>
+
+        </div>
+    </div>
+</DashboardLayout>
+
+<script>
+    import { supabase } from "../../../lib/supabase";
+
+    let stateAppointments = [];
+    let currentDate = new Date(); // Inicia en hoy
+    let currentView = 'day'; // day, week, month
+    
+    // Función de ayuda para formatear fechas en el header visual
+    function formatCurrentDate() {
+        const textEl = document.getElementById('dateText');
+        if (!textEl) return;
+
+        if (currentView === 'day') {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            let dateStr = currentDate.toLocaleDateString('es-ES', options);
+            dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+            textEl.innerText = dateStr;
+        } 
+        else if (currentView === 'week') {
+            const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - currentDate.getDay() + 1);
+            const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+            
+            const startStr = start.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+            const endStr = end.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+            textEl.innerText = `${startStr} al ${endStr}`;
+        }
+        else if (currentView === 'month') {
+            let dateStr = currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+            textEl.innerText = dateStr;
+        }
+
+        // Actualizar el input invisible para que el picker inicie en la fecha correcta
+        const hiddenInput = document.getElementById('nativeDateInput');
+        if (hiddenInput) {
+            const y = currentDate.getFullYear();
+            const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const d = String(currentDate.getDate()).padStart(2, '0');
+            hiddenInput.value = `${y}-${m}-${d}`;
+        }
+
+        // Actualizar UI de botones
+        const views = ['day', 'week', 'month'];
+        views.forEach(v => {
+            const btn = document.getElementById(`view${v.charAt(0).toUpperCase() + v.slice(1)}Btn`);
+            if (btn) {
+                if (v === currentView) {
+                    btn.className = "px-3 py-1 bg-white/10 text-white rounded-[1px] text-xs font-medium focus:outline-none transition-colors cursor-pointer";
+                } else {
+                    btn.className = "px-3 py-1 text-cement hover:text-white rounded-[1px] text-xs transition-colors cursor-pointer";
+                }
+            }
+        });
+    }
+
+    async function loadAppointments() {
+        try {
+            // Se hace un query asumiendo la tabla 'appointments' o 'citas'. 
+            // Y traemos la información relacionada de ser posible (cliente, barbero).
+            // NOTA: Si fallas las relaciones "profiles!client_id" ajustaremos según la base de datos real.
+            const { data, error } = await supabase
+                .from('appointments')
+                .select(`
+                    id, 
+                    appointment_date, 
+                    appointment_time,
+                    status,
+                    client_id,
+                    barber_id,
+                    notes,
+                    price,
+                    total_duration_minutes,
+                    profiles (
+                        first_name,
+                        email,
+                        phone
+                    ),
+                    barbers (
+                        nickname
+                    )
+                `)
+                .order('appointment_date', { ascending: true })
+                .order('appointment_time', { ascending: true });
+
+            if (error) {
+                console.error("Error fetching appointments:", error.message);
+                throw error;
+            }
+
+            stateAppointments = data || [];
+
+            // A falta de joins profundos garantizados en este snippet, vamos a intentar mostrar la data pura o relacionar localmente 
+            // si tuvieras los perfiles cacheados. Por ahora mostramos los IDs/fechas puras.
+            
+            updateMetrics(stateAppointments);
+            renderAppointments();
+
+        } catch (error) {
+            console.error("Error definitivo listando agenda:", error);
+            const container = document.getElementById('appointmentsContainer');
+            if(container) container.innerHTML = `<div class="p-6 text-center text-red-400 text-sm">Error conectando con la agenda. Revisa la consola o la estructura de la base de datos.</div>`;
+        }
+    }
+
+    function updateMetrics(appointments) {
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+
+        const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+        let todayCount = 0;
+        let completedMonth = 0;
+        let canceledMonth = 0;
+
+        appointments.forEach(app => {
+            const [yy, mm, dd] = app.appointment_date.split('-').map(Number);
+            const appDateObj = new Date(yy, mm - 1, dd);
+            const appDate = appDateObj.getTime();
+
+            // Citas de hoy
+            if (appDate >= startOfDay && appDate < endOfDay) {
+                todayCount++;
+            }
+
+            // Estadísticas del mes
+            if (appDate >= thisMonthStart) {
+                const statusStr = (app.status || '').toLowerCase();
+                if (statusStr === 'completed' || statusStr === 'completada') completedMonth++;
+                if (statusStr === 'cancelled' || statusStr === 'cancelada') canceledMonth++;
+            }
+        });
+
+        // Update UI
+        const elToday = document.getElementById('metricToday');
+        const elCompleted = document.getElementById('metricCompleted');
+        const elCanceled = document.getElementById('metricCanceled');
+        const barCompleted = document.getElementById('barCompleted');
+        const barCanceled = document.getElementById('barCanceled');
+
+        if(elToday) elToday.innerText = todayCount;
+        if(elCompleted) elCompleted.innerText = completedMonth;
+        if(elCanceled) elCanceled.innerText = canceledMonth;
+
+        const totalMonth = completedMonth + canceledMonth || 1; // evitar / 0
+        if(barCompleted) barCompleted.style.width = `${(completedMonth / totalMonth) * 100}%`;
+        if(barCanceled) barCanceled.style.width = `${(canceledMonth / totalMonth) * 100}%`;
+    }
+
+    function renderAppointments() {
+        const container = document.getElementById('appointmentsContainer');
+        if (!container) return;
+
+        let startTime, endTime;
+
+        if (currentView === 'day') {
+            const startOfDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+            startTime = startOfDay.getTime();
+            endTime = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1).getTime();
+        } else if (currentView === 'week') {
+            const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - currentDate.getDay() + 1);
+            startTime = start.getTime();
+            // A la misma fecha de inicio, le sumamos 7 días
+            endTime = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7).getTime();
+        } else if (currentView === 'month') {
+            const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            startTime = start.getTime();
+            endTime = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1).getTime();
+        }
+
+        const filteredAppointments = stateAppointments.filter(app => {
+            const [yy, mm, dd] = app.appointment_date.split('-').map(Number);
+            const appTime = new Date(yy, mm - 1, dd).getTime();
+            return appTime >= startTime && appTime < endTime;
+        });
+
+        if (filteredAppointments.length === 0) {
+            let msg = currentView === 'day' ? 'este día' : currentView === 'week' ? 'esta semana' : 'este mes';
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-6 h-[40vh] border border-white/5 border-dashed rounded-sm m-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" class="text-cement mb-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    <p class="text-cement text-sm">No hay citas programadas para ${msg}.</p>
+                </div>`;
+            return;
+        }
+
+        // Renderizado
+        container.innerHTML = filteredAppointments.map(app => {
+            // Fecha local exacta (evitando transformaciones de timezone no deseadas)
+            const [yy, mm, dd] = app.appointment_date.split('-').map(Number);
+            const dateObj = new Date(yy, mm - 1, dd);
+            
+            const timeStr = app.appointment_time ? app.appointment_time.substring(0, 5) : '00:00';
+            const dayStr = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+
+            // Si estamos en vista de semana o mes, mostrar también el día en la celda de la hora
+            const timeHTML = currentView !== 'day' ?
+                `<div class="text-lg font-display text-white w-full text-center group-hover:text-amber transition-colors">${timeStr}</div><div class="text-xs text-cement text-center">${dayStr}</div>` : 
+                `<div class="text-lg font-display text-white w-full text-center group-hover:text-amber transition-colors">${timeStr}</div>`;
+
+            // Helpers de color de status
+            let statusColor = "bg-white/10 text-white/70";
+            let statusLabel = app.status || "Pendiente";
+
+            const lowerStatus = statusLabel.toLowerCase();
+            if(lowerStatus === 'completed' || lowerStatus === 'completada') {
+                statusColor = "bg-green-500/10 text-green-400 border-green-500/20 border";
+                statusLabel = "Completada";
+            } else if(lowerStatus === 'cancelled' || lowerStatus === 'cancelada') {
+                statusColor = "bg-red-500/10 text-red-400 border-red-500/20 border";
+                statusLabel = "Cancelada";
+            } else if(lowerStatus === 'confirmed' || lowerStatus === 'confirmada') {
+                statusColor = "bg-blue-500/10 text-blue-400 border-blue-500/20 border";
+                statusLabel = "Confirmada";
+            } else {
+                statusColor = "bg-amber/10 text-amber border-amber/20 border";
+                statusLabel = "Pendiente";
+            }
+            
+            const clientName = app.profiles?.first_name ? `${app.profiles.first_name}` : `ID: ${String(app.client_id).substring(0, 8)}...`;
+            const clientPhone = app.profiles?.phone || 'Sin número';
+            const barberName = app.barbers?.nickname || `ID: ${String(app.barber_id || 'N/A').substring(0, 8)}...`;
+            const duration = app.total_duration_minutes ? `${app.total_duration_minutes} min` : 'N/A';
+            const price = app.price ? `$${app.price}` : 'N/A';
+
+            return `
+                <div class="bg-carbon/40 hover:bg-carbon/60 border border-white/5 rounded-sm p-4 transition-all duration-300 group cursor-pointer" onclick="window.viewAppointmentDetails('${app.id}')">
+                    <div class="flex flex-col md:grid md:grid-cols-[80px_1.5fr_1.5fr_1fr_80px] gap-4 items-center relative">
+
+                        <!-- Hora y Fecha-->
+                        <div class="flex flex-col items-center justify-center w-full">
+                            ${timeHTML}
+                        </div>
+
+                        <!-- Cliente ID / Nombre (requiere mapeo relacional posterior) -->
+                        <div class="text-center md:text-left min-w-0 w-full truncate">
+                            <div class="text-sm font-medium text-white truncate capitalize">${clientName}</div>
+                            <div class="text-[10px] text-cement truncate">${clientPhone}</div>
+                        </div>
+
+                        <!-- Servicio (requiere mapeo) -->
+                        <div class="text-center md:text-left text-xs text-cement w-full truncate bg-white/5 rounded-sm px-2 py-1 flex items-center justify-between">
+                            <span>Svc: ${app.notes ? 'Múltiples/Personalizado' : 'Servicio'}</span>
+                            <span class="text-amber font-bold">${price}</span>
+                        </div>
+
+                        <!-- Barbero (requiere mapeo) -->
+                        <div class="text-center md:text-left text-sm text-cement w-full flex items-center justify-center md:justify-start gap-2">
+                             <div class="w-6 h-6 rounded-full bg-[#A67C52] text-white flex flex-col items-center justify-center text-[10px] uppercase font-bold shrink-0">${barberName.charAt(0)}</div>
+                             <span class="truncate capitalize">${barberName}</span>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="text-center w-full flex justify-center">
+                            <span class="px-2 py-1 rounded-sm text-[10px] uppercase tracking-wider font-bold ${statusColor}">
+                                ${statusLabel}
+                            </span>
+                        </div>
+
+                        <!-- Indicador Hover -->
+                        <div class="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-cement/50 hidden md:block">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Initialization and Event Listeners
+    document.addEventListener("DOMContentLoaded", () => {
+        formatCurrentDate();
+        loadAppointments();
+
+        // View Listeners
+        document.getElementById('viewDayBtn')?.addEventListener('click', () => {
+            currentView = 'day';
+            formatCurrentDate();
+            renderAppointments();
+        });
+
+        document.getElementById('viewWeekBtn')?.addEventListener('click', () => {
+            currentView = 'week';
+            formatCurrentDate();
+            renderAppointments();
+        });
+
+        document.getElementById('viewMonthBtn')?.addEventListener('click', () => {
+            currentView = 'month';
+            formatCurrentDate();
+            renderAppointments();
+        });
+
+        // Nav listeners
+        document.getElementById('prevBtn')?.addEventListener('click', () => {
+            if (currentView === 'day') {
+                currentDate.setDate(currentDate.getDate() - 1);
+            } else if (currentView === 'week') {
+                currentDate.setDate(currentDate.getDate() - 7);
+            } else if (currentView === 'month') {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+            }
+            formatCurrentDate();
+            renderAppointments();
+        });
+
+        document.getElementById('nextBtn')?.addEventListener('click', () => {
+             if (currentView === 'day') {
+                currentDate.setDate(currentDate.getDate() + 1);
+            } else if (currentView === 'week') {
+                currentDate.setDate(currentDate.getDate() + 7);
+            } else if (currentView === 'month') {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+            }
+            formatCurrentDate();
+            renderAppointments();
+        });
+
+        document.getElementById('todayBtn')?.addEventListener('click', () => {
+            currentDate = new Date();
+            formatCurrentDate();
+            renderAppointments();
+        });
+
+        const dateInput = document.getElementById('nativeDateInput');
+        document.getElementById('currentDateDisplay')?.addEventListener('click', () => {
+            if (dateInput && typeof dateInput.showPicker === 'function') {
+                dateInput.showPicker();
+            }
+        });
+
+        dateInput?.addEventListener('change', (e) => {
+            if (e.target.value) {
+                // Agregar T12:00:00 evita que JS mueva el día por culpa de la zona horaria al crear el Date
+                currentDate = new Date(e.target.value + 'T12:00:00');
+                formatCurrentDate();
+                renderAppointments();
+            }
+        });
+    });
+
+
+    window.viewAppointmentDetails = (id) => {
+        // Find appointment
+        const app = stateAppointments.find(a => a.id === id);
+        if (!app) return;
+        
+        // Parsear notas de forma segura
+        let parsedNotes = { services: [], clientEmail: '' };
+        let displayNotes = '';
+        
+        if (app.notes) {
+            try {
+                parsedNotes = JSON.parse(app.notes);
+                if (parsedNotes.services && Array.isArray(parsedNotes.services)) {
+                    displayNotes = parsedNotes.services.map(s => `• ${s.name} ($${s.price})`).join('<br>');
+                } else {
+                    displayNotes = app.notes; // fallback a texto
+                }
+            } catch (e) {
+                // Era texto normal
+                displayNotes = app.notes;
+            }
+        }
+
+        const clientEmail = app.profiles?.email || parsedNotes.clientEmail || 'Sin correo';
+        const clientName = app.profiles?.first_name ? `${app.profiles.first_name}` : `ID: ${String(app.client_id).substring(0, 8)}`;
+        const clientPhone = app.profiles?.phone || parsedNotes.clientPhone || 'Sin número';
+        const barberName = app.barbers?.nickname || 'Sin asignar';
+        const lowerStatus = (app.status || 'pending').toLowerCase();
+
+        // Determinar color y texto de estado para el modal
+        let statusBadge = '';
+        if(lowerStatus === 'completed' || lowerStatus === 'completada') {
+            statusBadge = `<span class="px-2 py-1 rounded-sm text-xs uppercase tracking-wider font-bold bg-green-500/10 text-green-400 border-green-500/20 border">Completada</span>`;
+        } else if(lowerStatus === 'cancelled' || lowerStatus === 'cancelada') {
+            statusBadge = `<span class="px-2 py-1 rounded-sm text-xs uppercase tracking-wider font-bold bg-red-500/10 text-red-400 border-red-500/20 border">Cancelada</span>`;
+        } else if(lowerStatus === 'confirmed' || lowerStatus === 'confirmada') {
+            statusBadge = `<span class="px-2 py-1 rounded-sm text-xs uppercase tracking-wider font-bold bg-blue-500/10 text-blue-400 border-blue-500/20 border">Confirmada</span>`;
+        } else {
+            statusBadge = `<span class="px-2 py-1 rounded-sm text-xs uppercase tracking-wider font-bold bg-amber/10 text-amber border-amber/20 border">Pendiente</span>`;
+        }
+
+        // Body
+        const modalBody = document.getElementById('modalBody');
+        modalBody.innerHTML = `
+            <div class="flex items-center justify-between mb-2">
+                ${statusBadge}
+                <span class="text-white/60 text-sm font-medium"><span class="text-amber">$</span>${app.price || '0'}</span>
+            </div>
+            
+            <div class="space-y-3">
+                <div class="flex items-center gap-3 bg-white/5 p-3 rounded-sm border border-white/5">
+                    <div class="w-10 h-10 rounded-full bg-carbon text-white flex items-center justify-center font-bold border border-white/10 shrink-0">
+                        ${clientName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <p class="text-white text-sm font-medium capitalize">${clientName}</p>
+                        <p class="text-cement text-[11px] flex items-center gap-1 mt-0.5" title="Teléfono">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" class="text-amber shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> 
+                            ${clientPhone}
+                        </p>
+                        <p class="text-cement text-[11px] flex items-center gap-1 mt-0.5" title="Correo">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" class="text-amber shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                            <span class="truncate">${clientEmail}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white/5 p-3 rounded-sm border border-white/5">
+                        <p class="text-[10px] text-cement uppercase tracking-wider mb-1">Fecha y Hora</p>
+                        <p class="text-sm text-white font-medium">${app.appointment_date}</p>
+                        <p class="text-xs text-white/70">${app.appointment_time ? app.appointment_time.substring(0, 5) : '00:00'} hrs (Aprox ${app.total_duration_minutes || '0'} min)</p>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-sm border border-white/5">
+                        <p class="text-[10px] text-cement uppercase tracking-wider mb-1">Barbero</p>
+                        <p class="text-sm text-white font-medium capitalize flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-[#A67C52] text-[9px] flex items-center justify-center shrink-0">${barberName.charAt(0)}</span>
+                            ${barberName}
+                        </p>
+                    </div>
+                </div>
+
+                ${displayNotes ? `
+                <div class="bg-white/5 p-3 rounded-sm border border-white/5">
+                    <p class="text-[10px] text-cement uppercase tracking-wider mb-1">Servicios solicitados</p>
+                    <p class="text-sm text-white/80">${displayNotes}</p>
+                </div>
+                ` : ''}
+            </div>
+        `;
+
+        // Footer Actions
+        const modalFooter = document.getElementById('modalFooter');
+        const canCancel = (lowerStatus === 'pending' || lowerStatus === 'pendiente' || lowerStatus === 'confirmada' || lowerStatus === 'confirmed');
+
+        modalFooter.innerHTML = `
+            <button type="button" class="px-4 py-2 ${canCancel ? '' : 'w-full'} rounded-sm border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-all text-sm cursor-pointer" onclick="window.closeAdminModal()">
+                ${canCancel ? 'Cerrar' : 'Cerrar Detalles'}
+            </button>
+            ${canCancel ? `
+            <button type="button" id="btnCancelApp-${app.id}" class="px-4 py-2 rounded-sm border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all text-sm font-medium cursor-pointer flex-1" onclick="window.confirmCancelModal('${app.id}')">
+                Cancelar Cita
+            </button>
+            ` : ''}
+        `;
+
+        // Mostrar Modal Animado
+        const modal = document.getElementById('appointmentModal');
+        const content = document.getElementById('appointmentModalContent');
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Timeout ligero para animar
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    };
+
+    window.closeAdminModal = () => {
+        const modal = document.getElementById('appointmentModal');
+        const content = document.getElementById('appointmentModalContent');
+
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 300); // duracion transicion
+    };
+
+    window.confirmCancelModal = (id) => {
+        const btn = document.getElementById(`btnCancelApp-${id}`);
+        if (!btn) return;
+
+        // Si ya está en estado de confirmación, lo cancelamos de verdad
+        if (btn.dataset.confirming === "true") {
+            window.cancelAppointment(id, btn);
+            return;
+        }
+
+        // Pasar a estado de confirmación
+        btn.dataset.confirming = "true";
+        btn.innerText = "¿Seguro? Confirmar Cancelación";
+        btn.classList.remove('bg-red-500/10', 'text-red-400', 'border-red-500/30');
+        btn.classList.add('bg-red-500', 'text-white', 'border-red-500');
+
+        // Reset text after 4 seconds if not clicked
+        setTimeout(() => {
+            if (btn && btn.dataset.confirming === "true") {
+                btn.dataset.confirming = "false";
+                btn.innerText = "Cancelar Cita";
+                btn.classList.remove('bg-red-500', 'text-white', 'border-red-500');
+                btn.classList.add('bg-red-500/10', 'text-red-400', 'border-red-500/30');
+            }
+        }, 4000);
+    };
+
+    window.cancelAppointment = async (id, btnElement = null) => {
+        const originalBtnHTML = btnElement ? btnElement.innerHTML : '';
+        if (btnElement) {
+            btnElement.innerHTML = `<svg class="animate-spin h-4 w-4 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+            btnElement.disabled = true;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('appointments')
+                .update({ status: 'cancelled' })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            // Refrescar estado local
+            stateAppointments = stateAppointments.map(app => {
+                if (app.id === id) {
+                    return { ...app, status: 'cancelled' };
+                }
+                return app;
+            });
+
+            renderAppointments();
+            window.closeAdminModal(); // Cerramos modal al terminar
+        } catch (error) {
+            console.error(error);
+            alert("Hubo un error al cancelar la cita.");
+            if (btnElement) {
+                btnElement.innerHTML = originalBtnHTML;
+                btnElement.disabled = false;
+            }
+        }
+    };

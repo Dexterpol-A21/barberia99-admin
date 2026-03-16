@@ -1,0 +1,55 @@
+
+> barberia99-admin@0.0.1 build
+> astro build
+
+[2m09:41:28[22m [34m[content][39m Syncing content
+[2m09:41:28[22m [34m[content][39m Synced content
+[2m09:41:28[22m [34m[types][39m Generated [2m91ms[22m
+[2m09:41:28[22m [34m[build][39m output: [34m"static"[39m
+[2m09:41:28[22m [34m[build][39m mode: [34m"static"[39m
+[2m09:41:28[22m [34m[build][39m directory: [34mC:\Users\Paulc\OneDrive\Documentos\disenoWeb\barberia99-admin\dist\[39m
+[2m09:41:28[22m [34m[build][39m Collecting build info...
+[2m09:41:28[22m [34m[build][39m [32m✓ Completed in 170ms.[39m
+[2m09:41:28[22m [34m[build][39m Building static entrypoints...
+[2m09:41:31[22m [34m[vite][39m [32m✓ built in 2.81s[39m
+[2m09:41:31[22m [34m[build][39m [32m✓ Completed in 2.87s.[39m
+
+[42m[30m building client (vite) [39m[49m
+[2m09:41:31[22m [34m[vite][39m transforming...
+[2m09:41:33[22m [34m[vite][39m [32m✓[39m 68 modules transformed.
+[2m09:41:34[22m [34m[vite][39m rendering chunks...
+[2m09:41:34[22m [34m[vite][39m computing gzip size...
+[2m09:41:34[22m [34m[vite][39m [2mdist/[22m[36m_astro/DashboardLayout.astro_astro_type_script_index_0_lang.BlcatiCm.js  [39m[1m[2m  0.47 kB[22m[1m[22m[2m │ gzip:  0.32 kB[22m
+[2m09:41:34[22m [34m[vite][39m [2mdist/[22m[36m_astro/BarberoLayout.astro_astro_type_script_index_0_lang.BYR-w27L.js    [39m[1m[2m  0.56 kB[22m[1m[22m[2m │ gzip:  0.34 kB[22m
+[2m09:41:34[22m [34m[vite][39m [2mdist/[22m[36m_astro/onboarding.astro_astro_type_script_index_0_lang.BsNL6a1O.js       [39m[1m[2m  1.95 kB[22m[1m[22m[2m │ gzip:  1.00 kB[22m
+[2m09:41:34[22m [34m[vite][39m [2mdist/[22m[36m_astro/index.astro_astro_type_script_index_0_lang.o3tS4NlB.js            [39m[1m[2m  2.53 kB[22m[1m[22m[2m │ gzip:  1.13 kB[22m
+[2m09:41:34[22m [34m[vite][39m [2mdist/[22m[36m_astro/index.astro_astro_type_script_index_0_lang.Xf9GG1by.js            [39m[1m[2m  4.14 kB[22m[1m[22m[2m │ gzip:  1.64 kB[22m
+[2m09:41:34[22m [34m[vite][39m [2mdist/[22m[36m_astro/index.astro_astro_type_script_index_0_lang.DEC04h2b.js            [39m[1m[2m  5.02 kB[22m[1m[22m[2m │ gzip:  1.74 kB[22m
+[2m09:41:34[22m [34m[vite][39m [2mdist/[22m[36m_astro/Layout.astro_astro_type_script_index_0_lang.D0uhBjbr.js           [39m[1m[2m 17.51 kB[22m[1m[22m[2m │ gzip:  4.98 kB[22m
+[2m09:41:34[22m [34m[vite][39m [2mdist/[22m[36m_astro/supabase.C8JFIDnn.js                                              [39m[1m[2m171.85 kB[22m[1m[22m[2m │ gzip: 45.75 kB[22m
+[2m09:41:34[22m [34m[vite][39m [2mdist/[22m[36m_astro/client.T9fhd2RU.js                                                [39m[1m[2m194.63 kB[22m[1m[22m[2m │ gzip: 60.99 kB[22m
+[2m09:41:34[22m [34m[vite][39m [32m✓ built in 2.80s[39m
+
+[42m[30m generating static routes [39m[49m
+[2m09:41:34[22m [32m▶[39m src/pages/barbero/index.astro
+[2m09:41:34[22m   [34m└─[39m [2m/barbero/index.html[22m [2m(+38ms)[22m 
+[2m09:41:34[22m [32m▶[39m src/pages/dashboard/agenda/index.astro
+[2m09:41:34[22m   [34m└─[39m [2m/dashboard/agenda/index.html[22m [2m(+14ms)[22m 
+[2m09:41:34[22m [32m▶[39m src/pages/dashboard/barberos/index.astro
+[2m09:41:34[22m   [34m└─[39m [2m/dashboard/barberos/index.html[22m [2m(+327ms)[22m 
+[2m09:41:35[22m [32m▶[39m src/pages/dashboard/caja/index.astro
+[2m09:41:35[22m   [34m└─[39m [2m/dashboard/caja/index.html[22m [2m(+6ms)[22m 
+[2m09:41:35[22m [32m▶[39m src/pages/dashboard/clientes/index.astro
+[2m09:41:35[22m   [34m└─[39m [2m/dashboard/clientes/index.html[22m [2m(+5ms)[22m 
+[2m09:41:35[22m [32m▶[39m src/pages/dashboard/menu/index.astro
+[2m09:41:35[22m   [34m└─[39m [2m/dashboard/menu/index.html[22m [2m(+117ms)[22m 
+[2m09:41:35[22m [32m▶[39m src/pages/dashboard/index.astro
+[2m09:41:35[22m   [34m└─[39m [2m/dashboard/index.html[22m [2m(+9ms)[22m 
+[2m09:41:35[22m [32m▶[39m src/pages/onboarding.astro
+[2m09:41:35[22m   [34m└─[39m [2m/onboarding/index.html[22m [2m(+6ms)[22m 
+[2m09:41:35[22m [32m▶[39m src/pages/index.astro
+[2m09:41:35[22m   [34m└─[39m [2m/index.html[22m [2m(+5ms)[22m 
+[2m09:41:35[22m [32m✓ Completed in 1.03s.
+[39m
+[2m09:41:35[22m [34m[build][39m 9 page(s) built in [1m6.94s[22m
+[2m09:41:35[22m [34m[build][39m [1mComplete![22m

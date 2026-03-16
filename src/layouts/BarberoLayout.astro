@@ -1,0 +1,104 @@
+---
+import Layout from "./Layout.astro";
+import { Users, Calendar, LogOut } from "lucide-react";
+import Logo from "../components/Logo.astro";
+
+const { title = "Panel de Barbero | Barbería 99" } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<Layout title={title}>
+    <div class="min-h-screen bg-[#050301] text-bone flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-[#0a0806] border-r border-white/5 flex flex-col hidden md:flex shrink-0">
+            <div class="h-20 flex items-center justify-center border-b border-white/5 shrink-0 relative">
+                <div class="scale-75 origin-center">
+                    <Logo />
+                </div>
+                <span class="absolute bottom-2 right-4 text-[9px] font-body text-amber tracking-[0.3em] font-bold uppercase bg-amber/10 px-2 py-0.5 rounded-sm">Barbero</span>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                <div class="mb-2 px-4 pt-2">
+                    <p class="text-[10px] text-cement/50 uppercase tracking-widest font-bold">Mis Tareas</p>
+                </div>
+
+                <a href="/barbero" class={`flex items-center gap-3 px-4 py-3 rounded-sm transition-colors group ${currentPath === '/barbero' || currentPath === '/barbero/' ? 'bg-white/5 text-amber border border-white/10' : 'text-cement hover:text-white hover:bg-white/5'}`}>
+                    <Calendar size={18} class={currentPath === '/barbero' || currentPath === '/barbero/' ? '' : 'group-hover:text-amber transition-colors'} />
+                    <span class="text-sm font-medium">Mis Citas</span>
+                </a>
+
+                <a href="/barbero/clientes" class={`flex items-center gap-3 px-4 py-3 rounded-sm transition-colors group ${currentPath.includes('/barbero/clientes') ? 'bg-white/5 text-amber border border-white/10' : 'text-cement hover:text-white hover:bg-white/5'}`}>
+                    <Users size={18} class={currentPath.includes('/barbero/clientes') ? '' : 'group-hover:text-amber transition-colors'} />
+                    <span class="text-sm font-medium">Historial Clientes</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-white/5">
+                <button id="logout-btn" class="w-full flex items-center gap-3 text-[#cc0000] hover:bg-[#cc0000]/10 px-4 py-3 rounded-sm transition-colors cursor-pointer text-left">
+                    <LogOut size={18} />
+                    <span class="text-sm font-medium font-body">Cerrar Sesión</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <!-- Topbar -->
+            <header class="h-20 bg-[#0a0806] border-b border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between px-6 shrink-0 z-10 sticky top-0 md:static p-4 shadow-md md:shadow-none">
+                <div class="flex items-center justify-between w-full md:w-auto">
+                    <div>
+                        <h2 id="header-title" class="text-xl font-bold font-heading text-bone">Mis Citas</h2>
+                        <p class="text-sm text-cement hidden relative md:block">Gestión operativa.</p>
+                    </div>
+                </div>
+                
+                <!-- User Profile / Actions -->
+                <div class="items-center gap-4 hidden md:flex">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-sm bg-white/5 flex items-center justify-center border border-white/10 text-amber font-heading text-lg font-bold">
+                            B
+                        </div>
+                        <div>
+                            <p id="topbar-user-name" class="text-sm font-bold text-bone">...</p>
+                            <p class="text-xs text-cement capitalize tracking-widest">staff</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-[#0a0806] p-4 lg:p-8 relative">
+                <slot />
+            </main>
+        </div>
+        
+        <script>
+            import { supabase } from '../lib/supabase';
+            
+            const logoutBtn = document.getElementById("logout-btn");
+            logoutBtn?.addEventListener("click", async () => {
+                const { error } = await supabase.auth.signOut();
+                if (!error) {
+                    window.location.href = "/";
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                const titleH1 = document.querySelector('h1')?.innerText;
+                const headerTitle = document.getElementById('header-title');
+                if(titleH1 && headerTitle) {
+                    headerTitle.innerText = titleH1;
+                }
+
+                // Get User Info
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const name = user.user_metadata?.nickname || user.user_metadata?.full_name || 'Barbero';
+                    const nameEl = document.getElementById('topbar-user-name');
+                    if (nameEl) nameEl.textContent = name;
+                }
+            });
+        </script>
+    </div>
+</Layout>

@@ -1,0 +1,84 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * ButtonCTA - The primary call-to-action button.
+ * Style: Amber gradient with glow. Used for "Reservar Cita", "Agendar".
+ *
+ * Props:
+ *   href    (string) - The link destination.
+ *   class   (string) - Optional extra Tailwind classes.
+ *   ...rest - Any other HTML attributes for the <a> tag.
+ */
+interface Props extends HTMLAttributes<"a"> {
+    href?: string;
+    class?: string;
+    disabled?: boolean | null;
+    isSubmit?: boolean;
+    form?: string;
+}
+
+const { href, class: className = "", isSubmit = false, ...rest } = Astro.props;
+---
+
+{
+    isSubmit ? (
+        <button
+            type="submit"
+            class={`btn-cta flex items-center justify-center gap-3 uppercase tracking-wide px-10 h-[60px] text-lg text-white font-bold w-full ${className}`}
+            {...(rest as any)}
+        >
+            <slot />
+        </button>
+    ) : (
+        <a
+            href={href}
+            class={`btn-cta flex items-center justify-center gap-3 uppercase tracking-wide px-10 h-[60px] text-lg text-white font-bold ${className}`}
+            {...rest}
+        >
+            <slot />
+        </a>
+    )
+}
+
+<style>
+    .btn-cta {
+        --btn-bg-1: #d4a775;
+        --btn-bg-2: #a67c52;
+        cursor: pointer;
+        min-width: 120px;
+        font-size: var(--size, 1rem);
+        font-weight: 700;
+        transition: 0.8s;
+        background-size: 280% auto;
+        background-image: linear-gradient(
+            325deg,
+            var(--btn-bg-2) 0%,
+            var(--btn-bg-1) 55%,
+            var(--btn-bg-2) 90%
+        );
+        border: none;
+        border-radius: 2px;
+        color: #ffffff;
+        box-shadow:
+            0px 0px 20px rgba(166, 124, 82, 0.5),
+            0px 5px 5px -1px rgba(166, 124, 82, 0.25),
+            inset 4px 4px 8px rgba(255, 255, 255, 0.2),
+            inset -4px -4px 8px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-cta:hover {
+        background-position: right top;
+        color: white;
+    }
+
+    .btn-cta:is(:focus, :focus-visible, :active) {
+        outline: none;
+        box-shadow:
+            0 0 0 3px #ffffff,
+            0 0 0 6px #a67c52;
+    }
+</style>
