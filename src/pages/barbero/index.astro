@@ -221,7 +221,7 @@ import ButtonCTA from "../../components/ui/ButtonCTA.astro";
                         <div class="flex items-center gap-3 w-full sm:w-auto justify-end mt-2 sm:mt-0">
                             ${statusBadge}
                             ${(app.status === 'pending' || app.status === 'pendiente' || app.status === 'confirmed' || app.status === 'confirmada') ? `
-                            <button class="px-3 py-1.5 bg-green-500/10 border border-green-500/20 hover:border-green-500 hover:bg-green-500/20 text-green-500 text-xs rounded-[1px] transition-colors font-medium whitespace-nowrap" onclick="window.completarCita('${app.id}', '${app.client_id || ''}', ${app.price})">
+                            <button id="btn-complete-${app.id}" class="px-3 py-1.5 bg-green-500/10 border border-green-500/20 hover:border-green-500 hover:bg-green-500/20 text-green-500 text-xs rounded-[1px] transition-colors font-medium whitespace-nowrap cursor-pointer" onclick="window.completarCita('${app.id}', '${app.client_id || ''}', ${app.price})">
                                 Marcar Completada
                             </button>
                             ` : ''}
@@ -261,7 +261,34 @@ import ButtonCTA from "../../components/ui/ButtonCTA.astro";
 
 // Lógica para completar cita y asignar puntos
         window.completarCita = async (appointmentId, clientId, price) => {
-            if (!confirm('¿Confirmar que el cliente llegó, se atendió y realizó el pago?')) return;
+            const btn = document.getElementById(`btn-complete-${appointmentId}`);
+            if (!btn) return;
+
+            // FASE 1: Confirmación In-line
+            if (btn.dataset.confirming !== "true") {
+                btn.dataset.confirming = "true";
+                btn.innerText = "¿Confirmar Completada?";
+                // Remover estilos base
+                btn.classList.remove('bg-green-500/10', 'text-green-500', 'border-green-500/20', 'hover:border-green-500', 'hover:bg-green-500/20');
+                // Añadir estilos solidos de alerta
+                btn.classList.add('bg-green-500', 'text-white', 'border-green-500', 'hover:bg-green-600');
+                
+                // Reiniciar el botón si no se hace clic en 3 segundos
+                setTimeout(() => {
+                    if(btn && btn.dataset.confirming === "true") {
+                        btn.dataset.confirming = "false";
+                        btn.innerText = "Marcar Completada";
+                        btn.classList.remove('bg-green-500', 'text-white', 'border-green-500', 'hover:bg-green-600');
+                        btn.classList.add('bg-green-500/10', 'text-green-500', 'border-green-500/20', 'hover:border-green-500', 'hover:bg-green-500/20');
+                    }
+                }, 3000);
+                return; // Pausamos ejecución hasta segundo clic
+            }
+
+            // FASE 2: Modificando estado y llamando BD
+            const originalClasses = btn.className;
+            btn.innerHTML = `<svg class="animate-spin h-4 w-4 mx-auto inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+            btn.disabled = true;
 
             try {
                 // 1. Marcar la cita como completada (pagó y asistió)
@@ -283,7 +310,8 @@ import ButtonCTA from "../../components/ui/ButtonCTA.astro";
 
                     if (!profError && profile) {
                         // 1 peso = 1 punto
-                        const newPoints = (profile.points || 0) + Math.floor(price);
+                        const priceNum = Number(price) || 0;
+                        const newPoints = (profile.points || 0) + Math.floor(priceNum);
                         const newVisits = (profile.visits || 0) + 1;
 
                         await supabase
@@ -293,13 +321,26 @@ import ButtonCTA from "../../components/ui/ButtonCTA.astro";
                     }
                 }
 
-                // Mostrar éxito y refrescar la vista
-                alert('Cita marcada como completada. Pago, puntos y visita registrados.');
-                fetchAppointments();
+                // Mostrar éxito in-line (sin alert ruidoso)
+                btn.innerHTML = `¡Guardado!`;
+                
+                setTimeout(() => {
+                    fetchAppointments(); // refrescar
+                }, 1200);
 
             } catch (error) {
                 console.error("Error al completar la cita:", error);
-                alert('Hubo un error al intentar completar la cita.');
+                
+                // Mostrar error in-line
+                btn.className = "px-3 py-1.5 bg-red-500/10 border border-red-500/20 text-red-500 text-xs rounded-[1px] font-medium whitespace-nowrap";
+                btn.innerText = "Error (Reintentar)";
+                btn.dataset.confirming = "false";
+                btn.disabled = false;
+                
+                setTimeout(() => {
+                    btn.className = originalClasses;
+                    btn.innerText = "Marcar Completada";
+                }, 3000);
             }
         };
 
