@@ -340,7 +340,7 @@ import ButtonCTA from "../../../components/ui/ButtonCTA.astro";
 
             // Helpers de color de status
             let statusColor = "bg-white/10 text-white/70";
-            let statusLabel = app.status || "Pendiente";
+            let statusLabel = app.status || "Confirmada";
 
             const lowerStatus = statusLabel.toLowerCase();
             if(lowerStatus === 'completed' || lowerStatus === 'completada') {
@@ -349,15 +349,15 @@ import ButtonCTA from "../../../components/ui/ButtonCTA.astro";
             } else if(lowerStatus === 'cancelled' || lowerStatus === 'cancelada') {
                 statusColor = "bg-red-500/10 text-red-400 border-red-500/20 border";
                 statusLabel = "Cancelada";
-            } else if(lowerStatus === 'confirmed' || lowerStatus === 'confirmada') {
-                statusColor = "bg-blue-500/10 text-blue-400 border-blue-500/20 border";
+            } else if(lowerStatus === 'confirmed' || lowerStatus === 'confirmada' || lowerStatus === 'pending' || lowerStatus === 'pendiente') {
+                statusColor = "bg-amber/10 text-amber border-amber/20 border";
                 statusLabel = "Confirmada";
             } else if(lowerStatus === 'no_show') {
                 statusColor = "bg-purple-500/10 text-purple-400 border-purple-500/20 border";
                 statusLabel = "No Show";
             } else {
                 statusColor = "bg-amber/10 text-amber border-amber/20 border";
-                statusLabel = "Pendiente";
+                statusLabel = "Confirmada";
             }
             
             // Parse notes for JSON to extract accurate names and services
@@ -539,12 +539,12 @@ import ButtonCTA from "../../../components/ui/ButtonCTA.astro";
             statusBadge = `<span class="px-2 py-1 rounded-sm text-xs uppercase tracking-wider font-bold bg-green-500/10 text-green-400 border-green-500/20 border">Completada</span>`;
         } else if(lowerStatus === 'cancelled' || lowerStatus === 'cancelada') {
             statusBadge = `<span class="px-2 py-1 rounded-sm text-xs uppercase tracking-wider font-bold bg-red-500/10 text-red-400 border-red-500/20 border">Cancelada</span>`;
-        } else if(lowerStatus === 'confirmed' || lowerStatus === 'confirmada') {
-            statusBadge = `<span class="px-2 py-1 rounded-sm text-xs uppercase tracking-wider font-bold bg-blue-500/10 text-blue-400 border-blue-500/20 border">Confirmada</span>`;
+        } else if(lowerStatus === 'confirmed' || lowerStatus === 'confirmada' || lowerStatus === 'pending' || lowerStatus === 'pendiente') {
+            statusBadge = `<span class="px-2 py-1 rounded-sm text-xs uppercase tracking-wider font-bold bg-amber/10 text-amber border-amber/20 border">Confirmada</span>`;
         } else if(lowerStatus === 'no_show') {
             statusBadge = `<span class="px-2 py-1 rounded-sm text-xs uppercase tracking-wider font-bold bg-purple-500/10 text-purple-400 border-purple-500/20 border">No Show</span>`;
         } else {
-            statusBadge = `<span class="px-2 py-1 rounded-sm text-xs uppercase tracking-wider font-bold bg-amber/10 text-amber border-amber/20 border">Pendiente</span>`;
+            statusBadge = `<span class="px-2 py-1 rounded-sm text-xs uppercase tracking-wider font-bold bg-amber/10 text-amber border-amber/20 border">Confirmada</span>`;
         }
 
         // Body

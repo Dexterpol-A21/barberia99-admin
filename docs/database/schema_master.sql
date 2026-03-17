@@ -1,4 +1,3 @@
--- Master DB Schema (Updated)
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
@@ -39,7 +38,7 @@ CREATE TABLE public.barbers (
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   base_quota_cuts integer DEFAULT 10,
   specialty text DEFAULT 'Barbero'::text,
-  schedule jsonb DEFAULT '{"workDays": [1,2,3,4,5,6], "startTime": "10:00", "endTime": "20:00"}'::jsonb,
+  schedule jsonb DEFAULT '{"endTime": "20:00", "workDays": [1, 2, 3, 4, 5, 6], "startTime": "10:00"}'::jsonb,
   CONSTRAINT barbers_pkey PRIMARY KEY (id),
   CONSTRAINT barbers_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
   CONSTRAINT barbers_branch_id_fkey FOREIGN KEY (branch_id) REFERENCES public.branches(id)
@@ -62,6 +61,7 @@ CREATE TABLE public.profiles (
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   email text,
   wants_promos boolean DEFAULT true,
+  visits integer DEFAULT 0,
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
