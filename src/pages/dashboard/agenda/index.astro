@@ -609,8 +609,11 @@ import ButtonCTA from "../../../components/ui/ButtonCTA.astro";
                 ${canCancel ? 'Cerrar' : 'Cerrar Detalles'}
             </button>
             ${canCancel ? `
-            <button type="button" id="btnCancelApp-${app.id}" class="px-4 py-2 rounded-sm border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all text-sm font-medium cursor-pointer flex-1" onclick="window.confirmCancelModal('${app.id}')">
+            <button type="button" id="btnCancelApp-${app.id}" class="px-4 py-2 rounded-sm border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all text-sm font-medium cursor-pointer" onclick="window.confirmCancelModal('${app.id}')">
                 Cancelar Cita
+            </button>
+            <button type="button" id="btnCompleteApp-${app.id}" class="px-4 py-2 rounded-sm border border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-all text-sm font-medium cursor-pointer flex-1" onclick="window.confirmCompleteModal('${app.id}', '${app.client_id || ''}', ${app.price})">
+                Marcar Completada
             </button>
             ` : ''}
         `;
@@ -697,6 +700,87 @@ import ButtonCTA from "../../../components/ui/ButtonCTA.astro";
         } catch (error) {
             console.error(error);
             alert("Hubo un error al cancelar la cita.");
+            if (btnElement) {
+                btnElement.innerHTML = originalBtnHTML;
+                btnElement.disabled = false;
+            }
+        }
+    };
+
+    window.confirmCompleteModal = (id, clientId, price) => {
+        const btn = document.getElementById(`btnCompleteApp-${id}`);
+        if (!btn) return;
+
+        if (btn.dataset.confirming === "true") {
+            window.completeAppointmentAndAssignPoints(id, clientId, price, btn);
+            return;
+        }
+
+        btn.dataset.confirming = "true";
+        btn.innerText = "¿Confirmar Completada?";
+        btn.classList.remove('bg-green-500/10', 'text-green-400', 'border-green-500/30');
+        btn.classList.add('bg-green-500', 'text-white', 'border-green-500');
+
+        setTimeout(() => {
+            if (btn && btn.dataset.confirming === "true") {
+                btn.dataset.confirming = "false";
+                btn.innerText = "Marcar Completada";
+                btn.classList.remove('bg-green-500', 'text-white', 'border-green-500');
+                btn.classList.add('bg-green-500/10', 'text-green-400', 'border-green-500/30');
+            }
+        }, 4000);
+    };
+
+    window.completeAppointmentAndAssignPoints = async (id, clientId, price, btnElement = null) => {
+        const originalBtnHTML = btnElement ? btnElement.innerHTML : '';
+        if (btnElement) {
+            btnElement.innerHTML = `<svg class="animate-spin h-4 w-4 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+            btnElement.disabled = true;
+        }
+
+        try {
+            // 1. Update status
+            const { error: appError } = await supabase
+                .from('appointments')
+                .update({ status: 'completed' })
+                .eq('id', id);
+
+            if (appError) throw appError;
+
+            // 2. Assign points
+            if (clientId && clientId !== 'null' && clientId !== 'undefined') {
+                const { data: profile, error: profError } = await supabase
+                    .from('profiles')
+                    .select('points, visits')
+                    .eq('id', clientId)
+                    .single();
+
+                if (!profError && profile) {
+                    const newPoints = (profile.points || 0) + Math.floor(price || 0);
+                    const newVisits = (profile.visits || 0) + 1;
+                    
+                    await supabase
+                        .from('profiles')
+                        .update({ points: newPoints, visits: newVisits })
+                        .eq('id', clientId);
+                }
+            }
+
+            // Update local state
+            stateAppointments = stateAppointments.map(app => {
+                if (app.id === id) {
+                    return { ...app, status: 'completed' };
+                }
+                return app;
+            });
+
+            renderAppointments();
+            window.closeAdminModal();
+            // Small toast could go here
+
+        } catch (error) {
+            console.error("Error al completar:", error);
+            alert("Hubo un error al marcar como completada.");
             if (btnElement) {
                 btnElement.innerHTML = originalBtnHTML;
                 btnElement.disabled = false;
