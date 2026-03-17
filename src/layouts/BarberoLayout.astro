@@ -93,6 +93,12 @@ const currentPath = Astro.url.pathname;
 
                 // Get User Info
                 const { data: { user } } = await supabase.auth.getUser();
+                
+                if (!user) {
+                    window.location.replace("/");
+                    return;
+                }
+
                 if (user) {
                     const name = user.user_metadata?.nickname || user.user_metadata?.full_name || 'Barbero';
                     const nameEl = document.getElementById('topbar-user-name');

@@ -119,6 +119,11 @@ const currentPath = Astro.url.pathname;
 
         // Apply RBAC
         const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            window.location.replace("/");
+        }
+
         if (user) {
             const name = user.user_metadata?.nickname || 'Usuario';
             const nameEl = document.getElementById('topbar-user-name');
