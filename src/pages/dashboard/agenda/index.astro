@@ -680,12 +680,16 @@ import ButtonCTA from "../../../components/ui/ButtonCTA.astro";
         }
 
         try {
-            const { error } = await supabase
+            const { data: updatedApp, error } = await supabase
                 .from('appointments')
                 .update({ status: 'cancelled' })
-                .eq('id', id);
+                .eq('id', id)
+                .select();
 
             if (error) throw error;
+            if (!updatedApp || updatedApp.length === 0) {
+                throw new Error("SUPABASE_RLS_BLOCK: Permisos insuficientes en la Base de Datos para modificar esta cita. (RLS Activado)");
+            }
 
             // Refrescar estado local
             stateAppointments = stateAppointments.map(app => {
@@ -740,12 +744,16 @@ import ButtonCTA from "../../../components/ui/ButtonCTA.astro";
 
         try {
             // 1. Update status
-            const { error: appError } = await supabase
+            const { data: updatedApp, error: appError } = await supabase
                 .from('appointments')
                 .update({ status: 'completed' })
-                .eq('id', id);
+                .eq('id', id)
+                .select(); // IMPORTANTE validar que la fila modificada retorne info
 
             if (appError) throw appError;
+            if (!updatedApp || updatedApp.length === 0) {
+                throw new Error("SUPABASE_RLS_BLOCK: Permisos insuficientes en la Base de Datos para modificar esta cita. (RLS Activado)");
+            }
 
             // 2. Assign points
             if (clientId && clientId !== 'null' && clientId !== 'undefined') {
@@ -779,8 +787,13 @@ import ButtonCTA from "../../../components/ui/ButtonCTA.astro";
             // Small toast could go here
 
         } catch (error) {
-            console.error("Error al completar:", error);
-            alert("Hubo un error al marcar como completada.");
+            console.error("Error definitivo al completar:", error);
+            if (error.message && error.message.includes('RLS')) {
+                alert('Acceso Denegado: La BD bloqueó el cambio por políticas RLS. Inicia sesión o ajusta permisos en Supabase.');
+            } else {
+                alert("Hubo un error al marcar como completada: " + error.message);
+            }
+            
             if (btnElement) {
                 btnElement.innerHTML = originalBtnHTML;
                 btnElement.disabled = false;

@@ -292,12 +292,18 @@ import ButtonCTA from "../../components/ui/ButtonCTA.astro";
 
             try {
                 // 1. Marcar la cita como completada (pagó y asistió)
-                const { error: appError } = await supabase
+                const { data: updatedApp, error: appError } = await supabase
                     .from('appointments')
                     .update({ status: 'completed' })
-                    .eq('id', appointmentId);
+                    .eq('id', appointmentId)
+                    .select(); // IMPORTANTE: Pedir la data de regreso para ver si RLS la bloqueó
 
                 if (appError) throw appError;
+
+                // Si no regresó data, significa que el RLS de Supabase nos bloqueó o la cita no existe
+                if (!updatedApp || updatedApp.length === 0) {
+                    throw new Error("SUPABASE_RLS_BLOCK: No tienes permisos en la base de datos (RLS) para actualizar esta cita. Revisa las políticas de RLS en 'appointments'.");
+                }
 
                 // 2. Si el cliente está registrado, sumar visita y puntos
                 if (clientId && clientId !== 'null' && clientId !== 'undefined') {
@@ -329,13 +335,19 @@ import ButtonCTA from "../../components/ui/ButtonCTA.astro";
                 }, 1200);
 
             } catch (error) {
-                console.error("Error al completar la cita:", error);
+                console.error("Error definitivo al completar:", error);
                 
                 // Mostrar error in-line
                 btn.className = "px-3 py-1.5 bg-red-500/10 border border-red-500/20 text-red-500 text-xs rounded-[1px] font-medium whitespace-nowrap";
-                btn.innerText = "Error (Reintentar)";
+                btn.innerText = "Error de Permisos (Reintentar)";
                 btn.dataset.confirming = "false";
                 btn.disabled = false;
+
+                if (error.message && error.message.includes('RLS')) {
+                    alert('Acceso Denegado: La base de datos (Supabase) bloqueó el cambio por políticas RLS. Necesitas desactivarlas o iniciar sesión.');
+                } else {
+                    alert('Hubo un error al intentar guardar: ' + error.message);
+                }
                 
                 setTimeout(() => {
                     btn.className = originalClasses;
