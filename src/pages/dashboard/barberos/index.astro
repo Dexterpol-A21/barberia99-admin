@@ -402,15 +402,16 @@ import { Search, Filter, X, Mail, User, Percent, Scissors, CheckCircle, Trash2, 
                     try {
                         // 1. Quitar rol de barber en profiles
                         if (profileId) {
-                            const { error: roleErr } = await supabase.from('profiles').update({ role: 'client' }).eq('id', profileId);
-                            if (roleErr) console.warn("No se pudo quitar el rol. Omitiendo...", roleErr);
+                            const { data: roleData, error: roleErr } = await supabase.from('profiles').update({ role: 'client' }).eq('id', profileId).select();
+                            if (roleErr || !roleData || roleData.length === 0) {
+                                console.warn("No se pudo quitar el rol (¿Bloqueado por RLS?). Omitiendo...", roleErr);
+                            }
                         }
-                        
+
                         // 2. Eliminar registro de barbers
-                        const { error: delErr } = await supabase.from('barbers').delete().eq('id', id);
+                        const { data: delData, error: delErr } = await supabase.from('barbers').delete().eq('id', id).select();
                         if (delErr) throw delErr;
-                        
-                        alert('Barbero eliminado correctamente.');
+                        if (!delData || delData.length === 0) throw new Error("Acceso denegado por permisos de RLS al intentar eliminar en barbers.");
                         loadBarbers(); // Recargar la tabla
                     } catch (err) {
                         console.error('Error eliminando barbero:', err);
