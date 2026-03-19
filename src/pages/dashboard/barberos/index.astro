@@ -52,7 +52,7 @@ import { Search, Filter, X, Mail, User, Percent, Scissors, CheckCircle, Trash2, 
 
         <!-- Modal Invite Barber -->
         <div id="modal-invite" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
-            <div class="bg-[#0a0806] border border-white/10 rounded-sm w-full max-w-md p-6 transform scale-95 transition-transform duration-300 relative" id="modal-content">
+            <div class="bg-[#0a0806] border border-white/10 rounded-sm w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 md:p-8 transform scale-95 transition-transform duration-300 relative" id="modal-content">
                 <button id="btn-close-modal" class="absolute top-4 right-4 text-cement hover:text-white transition-colors cursor-pointer">
                     <X size={20} />
                 </button>
@@ -67,142 +67,152 @@ import { Search, Filter, X, Mail, User, Percent, Scissors, CheckCircle, Trash2, 
                 <form id="invite-barber-form" class="space-y-4">
                     <input type="hidden" id="input-barber-id" />
 
-                    <div>
-                        <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2">Correo Electrónico a Vincular</label>
-                        <div class="relative flex items-center">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
-                            <input type="email" id="input-email" required placeholder="correo@ejemplo.com" class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-cement focus:border-amber focus:outline-none transition-colors" />
-                        </div>
-                        <p class="text-[10px] text-amber mt-1 hidden" id="edit-notice-email">Si dejas este correo así, se intentará actualizar el perfil asociado si existe.</p>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2">Alias / Apodo</label>
-                        <div class="relative flex items-center">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
-                            <input type="text" id="input-alias" required maxlength="15" placeholder="Ej. Master Hugo" class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-cement focus:border-amber focus:outline-none transition-colors" />
-                        </div>
-                        <p class="text-[10px] text-cement/60 mt-1 text-right">Máximo 15 caracteres</p>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2">Especialidad</label>
-                        <div class="relative flex items-center">
-                            <Scissors className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
-                            <input type="text" id="input-specialty" required maxlength="20" placeholder="Ej. Fades, Maestro..." class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-cement focus:border-amber focus:outline-none transition-colors" />
-                        </div>
-                        <p class="text-[10px] text-cement/60 mt-1 text-right">Máximo 20 caracteres</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2">Comisión (%)</label>
-                            <div class="relative flex items-center">
-                                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
-                                <input type="number" id="input-commission" required min="0" max="100" value="50" class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-cement focus:border-amber focus:outline-none transition-colors" />
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2" title="Garantía de cortes base">Cuota Silla</label>
-                            <div class="relative flex items-center">
-                                <Scissors className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
-                                <input type="number" id="input-quota" required min="0" value="10" class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-cement focus:border-amber focus:outline-none transition-colors" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="border-t border-white/5 pt-4 mt-2">
-                        <h3 class="text-white text-sm font-bold mb-3 flex items-center gap-2"><Clock size={16} className="text-amber"/> Horario Base</h3>
-                        <div class="grid grid-cols-2 gap-4 mb-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Lado Izquierdo: Info General -->
+                        <div class="space-y-4">
                             <div>
-                                <label class="block text-[10px] uppercase text-cement font-bold mb-1">Entrada</label>
-                                <select id="input-start-time" class="w-full bg-carbon/60 border border-white/10 rounded-sm px-3 h-10 text-sm text-white focus:border-amber outline-none cursor-pointer appearance-none">
-                                    <option value="08:00">08:00 a. m.</option>
-                                    <option value="08:30">08:30 a. m.</option>
-                                    <option value="09:00">09:00 a. m.</option>
-                                    <option value="09:30">09:30 a. m.</option>
-                                    <option value="10:00" selected>10:00 a. m.</option>
-                                    <option value="10:30">10:30 a. m.</option>
-                                    <option value="11:00">11:00 a. m.</option>
-                                    <option value="11:30">11:30 a. m.</option>
-                                    <option value="12:00">12:00 p. m.</option>
-                                    <option value="12:30">12:30 p. m.</option>
-                                    <option value="13:00">01:00 p. m.</option>
-                                    <option value="13:30">01:30 p. m.</option>
-                                    <option value="14:00">02:00 p. m.</option>
-                                    <option value="14:30">02:30 p. m.</option>
-                                    <option value="15:00">03:00 p. m.</option>
-                                    <option value="15:30">03:30 p. m.</option>
-                                    <option value="16:00">04:00 p. m.</option>
-                                    <option value="16:30">04:30 p. m.</option>
-                                    <option value="17:00">05:00 p. m.</option>
-                                    <option value="17:30">05:30 p. m.</option>
-                                    <option value="18:00">06:00 p. m.</option>
-                                    <option value="18:30">06:30 p. m.</option>
-                                    <option value="19:00">07:00 p. m.</option>
-                                    <option value="19:30">07:30 p. m.</option>
-                                    <option value="20:00">08:00 p. m.</option>
-                                    <option value="20:30">08:30 p. m.</option>
-                                    <option value="21:00">09:00 p. m.</option>
-                                    <option value="21:30">09:30 p. m.</option>
-                                    <option value="22:00">10:00 p. m.</option>
-                                </select>
+                                <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2">Correo Electrónico a Vincular</label>
+                                <div class="relative flex items-center">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
+                                    <input type="email" id="input-email" required placeholder="correo@ejemplo.com" class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-cement focus:border-amber focus:outline-none transition-colors" />
+                                </div>
+                                <p class="text-[10px] text-amber mt-1 hidden" id="edit-notice-email">Si dejas este correo así, se intentará actualizar el perfil asociado si existe.</p>
                             </div>
+
                             <div>
-                                <label class="block text-[10px] uppercase text-cement font-bold mb-1">Salida</label>
-                                <select id="input-end-time" class="w-full bg-carbon/60 border border-white/10 rounded-sm px-3 h-10 text-sm text-white focus:border-amber outline-none cursor-pointer appearance-none">
-                                    <option value="08:00">08:00 a. m.</option>
-                                    <option value="08:30">08:30 a. m.</option>
-                                    <option value="09:00">09:00 a. m.</option>
-                                    <option value="09:30">09:30 a. m.</option>
-                                    <option value="10:00">10:00 a. m.</option>
-                                    <option value="10:30">10:30 a. m.</option>
-                                    <option value="11:00">11:00 a. m.</option>
-                                    <option value="11:30">11:30 a. m.</option>
-                                    <option value="12:00">12:00 p. m.</option>
-                                    <option value="12:30">12:30 p. m.</option>
-                                    <option value="13:00">01:00 p. m.</option>
-                                    <option value="13:30">01:30 p. m.</option>
-                                    <option value="14:00">02:00 p. m.</option>
-                                    <option value="14:30">02:30 p. m.</option>
-                                    <option value="15:00">03:00 p. m.</option>
-                                    <option value="15:30">03:30 p. m.</option>
-                                    <option value="16:00">04:00 p. m.</option>
-                                    <option value="16:30">04:30 p. m.</option>
-                                    <option value="17:00">05:00 p. m.</option>
-                                    <option value="17:30">05:30 p. m.</option>
-                                    <option value="18:00">06:00 p. m.</option>
-                                    <option value="18:30">06:30 p. m.</option>
-                                    <option value="19:00">07:00 p. m.</option>
-                                    <option value="19:30">07:30 p. m.</option>
-                                    <option value="20:00" selected>08:00 p. m.</option>
-                                    <option value="20:30">08:30 p. m.</option>
-                                    <option value="21:00">09:00 p. m.</option>
-                                    <option value="21:30">09:30 p. m.</option>
-                                    <option value="22:00">10:00 p. m.</option>
-                                </select>
+                                <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2">Alias / Apodo</label>
+                                <div class="relative flex items-center">
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
+                                    <input type="text" id="input-alias" required maxlength="15" placeholder="Ej. Master Hugo" class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-cement focus:border-amber focus:outline-none transition-colors" />
+                                </div>
+                                <p class="text-[10px] text-cement/60 mt-1 text-right">Máximo 15 caracteres</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2">Especialidad</label>
+                                <div class="relative flex items-center">
+                                    <Scissors className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
+                                    <input type="text" id="input-specialty" required maxlength="20" placeholder="Ej. Fades, Maestro..." class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-cement focus:border-amber focus:outline-none transition-colors" />
+                                </div>
+                                <p class="text-[10px] text-cement/60 mt-1 text-right">Máximo 20 caracteres</p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2">Comisión (%)</label>
+                                    <div class="relative flex items-center">
+                                        <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
+                                        <input type="number" id="input-commission" required min="0" max="100" value="50" class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-cement focus:border-amber focus:outline-none transition-colors" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs uppercase tracking-widest text-cement font-bold mb-2" title="Garantía de cortes base">Cuota Silla</label>
+                                    <div class="relative flex items-center">
+                                        <Scissors className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
+                                        <input type="number" id="input-quota" required min="0" value="10" class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-11 text-sm text-white placeholder-cement focus:border-amber focus:outline-none transition-colors" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-[10px] uppercase text-cement font-bold mb-3">Días Laborales</label>
-                            <div class="flex flex-wrap gap-x-4 gap-y-2 text-sm" id="days-container">
-                                <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="1" checked class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Lu</label>
-                                <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="2" checked class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Ma</label>
-                                <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="3" checked class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Mi</label>
-                                <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="4" checked class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Ju</label>
-                                <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="5" checked class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Vi</label>
-                                <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="6" checked class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Sa</label>
-                                <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="0" class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Do</label>
+
+                        <!-- Lado Derecho: Horarios y Estado -->
+                        <div class="space-y-4 md:border-l md:border-white/5 md:pl-6">
+                            <h3 class="text-white text-sm font-bold flex items-center gap-2 pt-2 md:pt-0 mb-1"><Clock size={16} className="text-amber"/> Horario Base</h3>
+                            <div class="grid grid-cols-2 gap-4 mb-3 mt-1">
+                                <div>
+                                    <label class="block text-[10px] uppercase text-cement font-bold mb-1">Entrada</label>
+                                    <select id="input-start-time" class="w-full bg-carbon/60 border border-white/10 rounded-sm px-3 h-10 text-sm text-white focus:border-amber outline-none cursor-pointer appearance-none">
+                                        <option value="08:00">08:00 a. m.</option>
+                                        <option value="08:30">08:30 a. m.</option>
+                                        <option value="09:00">09:00 a. m.</option>
+                                        <option value="09:30">09:30 a. m.</option>
+                                        <option value="10:00" selected>10:00 a. m.</option>
+                                        <option value="10:30">10:30 a. m.</option>
+                                        <option value="11:00">11:00 a. m.</option>
+                                        <option value="11:30">11:30 a. m.</option>
+                                        <option value="12:00">12:00 p. m.</option>
+                                        <option value="12:30">12:30 p. m.</option>
+                                        <option value="13:00">01:00 p. m.</option>
+                                        <option value="13:30">01:30 p. m.</option>
+                                        <option value="14:00">02:00 p. m.</option>
+                                        <option value="14:30">02:30 p. m.</option>
+                                        <option value="15:00">03:00 p. m.</option>
+                                        <option value="15:30">03:30 p. m.</option>
+                                        <option value="16:00">04:00 p. m.</option>
+                                        <option value="16:30">04:30 p. m.</option>
+                                        <option value="17:00">05:00 p. m.</option>
+                                        <option value="17:30">05:30 p. m.</option>
+                                        <option value="18:00">06:00 p. m.</option>
+                                        <option value="18:30">06:30 p. m.</option>
+                                        <option value="19:00">07:00 p. m.</option>
+                                        <option value="19:30">07:30 p. m.</option>
+                                        <option value="20:00">08:00 p. m.</option>
+                                        <option value="20:30">08:30 p. m.</option>
+                                        <option value="21:00">09:00 p. m.</option>
+                                        <option value="21:30">09:30 p. m.</option>
+                                        <option value="22:00">10:00 p. m.</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] uppercase text-cement font-bold mb-1">Salida</label>
+                                    <select id="input-end-time" class="w-full bg-carbon/60 border border-white/10 rounded-sm px-3 h-10 text-sm text-white focus:border-amber outline-none cursor-pointer appearance-none">
+                                        <option value="08:00">08:00 a. m.</option>
+                                        <option value="08:30">08:30 a. m.</option>
+                                        <option value="09:00">09:00 a. m.</option>
+                                        <option value="09:30">09:30 a. m.</option>
+                                        <option value="10:00">10:00 a. m.</option>
+                                        <option value="10:30">10:30 a. m.</option>
+                                        <option value="11:00">11:00 a. m.</option>
+                                        <option value="11:30">11:30 a. m.</option>
+                                        <option value="12:00">12:00 p. m.</option>
+                                        <option value="12:30">12:30 p. m.</option>
+                                        <option value="13:00">01:00 p. m.</option>
+                                        <option value="13:30">01:30 p. m.</option>
+                                        <option value="14:00">02:00 p. m.</option>
+                                        <option value="14:30">02:30 p. m.</option>
+                                        <option value="15:00">03:00 p. m.</option>
+                                        <option value="15:30">03:30 p. m.</option>
+                                        <option value="16:00">04:00 p. m.</option>
+                                        <option value="16:30">04:30 p. m.</option>
+                                        <option value="17:00">05:00 p. m.</option>
+                                        <option value="17:30">05:30 p. m.</option>
+                                        <option value="18:00">06:00 p. m.</option>
+                                        <option value="18:30">06:30 p. m.</option>
+                                        <option value="19:00">07:00 p. m.</option>
+                                        <option value="19:30">07:30 p. m.</option>
+                                        <option value="20:00" selected>08:00 p. m.</option>
+                                        <option value="20:30">08:30 p. m.</option>
+                                        <option value="21:00">09:00 p. m.</option>
+                                        <option value="21:30">09:30 p. m.</option>
+                                        <option value="22:00">10:00 p. m.</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-[10px] uppercase text-cement font-bold mb-3 mt-4">Días Laborales</label>
+                                <div class="flex flex-wrap gap-x-4 gap-y-2 text-sm" id="days-container">
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="1" checked class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Lu</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="2" checked class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Ma</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="3" checked class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Mi</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="4" checked class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Ju</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="5" checked class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Vi</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="6" checked class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Sa</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-white/80 hover:text-white"><input type="checkbox" value="0" class="accent-amber w-4 h-4 cursor-pointer day-checkbox"> Do</label>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between border-t border-white/5 pt-4 mt-6">
+                                <label class="text-xs uppercase tracking-widest text-cement font-bold" for="input-active">Estado</label>
+                                <div class="flex items-center gap-2" id="div-active" style="display: none;">
+                                    <label class="text-sm text-cement" for="input-active">Activo</label>
+                                    <input type="checkbox" id="input-active" checked class="accent-amber w-4 h-4 cursor-pointer" />
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2 mt-4 hidden" id="div-active">
-                        <input type="checkbox" id="input-active" checked class="accent-amber w-4 h-4 cursor-pointer" />
-                        <label class="text-sm text-cement cursor-pointer" for="input-active">Barbero Activo</label>
-                    </div>
-
-                    <div class="pt-4 flex justify-end gap-3 border-t border-white/5 mt-6">
+                    <div class="pt-6 flex justify-end gap-3 border-t border-white/5 mt-6">
                         <button type="button" id="btn-cancel-modal" class="px-4 py-2 text-sm text-cement font-medium hover:text-white transition-colors cursor-pointer">
                             Cancelar
                         </button>
@@ -516,12 +526,20 @@ import { Search, Filter, X, Mail, User, Percent, Scissors, CheckCircle, Trash2, 
 
                 if (id) {
                     // Update: El barbero ya existe
-                    const { error } = await supabase.from('barbers').update({
+                    const { data, error } = await supabase.from('barbers').update({
                         nickname, specialty, commission_rate, base_quota_cuts, is_active, schedule
-                    }).eq('id', id);
+                    }).eq('id', id).select();
                     
                     if (error) throw error;
+                    if (!data || data.length === 0) {
+                        throw new Error("No se pudo actualizar (Permiso RLS de UPDATE denegado en la base de datos).");
+                    }
+
                     showNotif('¡Barbero actualizado correctamente!');
+                    setTimeout(() => {
+                        closeModal();
+                        loadBarbers();
+                    }, 1500);
                 } else {
                     // Insert: Vincular Barbero existente
                     // 1. Buscar el perfil en la tabla profiles por email
