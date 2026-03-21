@@ -1,0 +1,579 @@
+---
+import BarberoLayout from "../../../layouts/BarberoLayout.astro";
+import { Search, Download, Edit2, Trash2, Calendar, Filter, ChevronLeft, ChevronRight, X } from "lucide-react";
+---
+
+<BarberoLayout title="Historial Clientes | Barbería 99">
+    <div class="w-full mx-auto space-y-6 flex flex-col min-h-[calc(100vh-8rem)]">
+        <h1 class="hidden">Directorio de Clientes</h1>
+
+        <!-- Resumen y Gráficos -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+            <!-- Card 1: Total Clientes -->
+            <div class="bg-carbon/60 border border-white/5 rounded-sm p-4 flex flex-col justify-between h-32">
+                <div class="text-cement text-xs uppercase tracking-wider font-medium mb-1">Total Clientes</div>
+                <div class="text-3xl font-display text-white" id="metricTotal">0</div>
+                <div class="text-xs text-cement mt-auto flex items-center gap-1">Registrados en el sistema</div>
+            </div>
+
+            <!-- Card 2: Nuevos Este Mes -->
+            <div class="bg-carbon/60 border border-white/5 rounded-sm p-4 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div class="flex justify-between items-start mb-1 relative z-10">
+                    <div class="text-cement text-xs uppercase tracking-wider font-medium">Nuevos Este Mes</div>
+                    <span class="text-[10px] text-green-400 font-medium bg-green-400/10 px-2 py-0.5 rounded-sm" id="metricGrowth">0%</span>
+                </div>
+                <div class="text-3xl font-display text-white relative z-10" id="metricThisMonth">0</div>
+                
+                <!-- Mini Gráfico de Barras -->
+                <div class="absolute bottom-0 left-4 right-4 h-12 flex items-end gap-1 pt-4 opacity-70 group-hover:opacity-100 transition-opacity" id="chartThisMonth">
+                    <!-- Las barras se inyectarán por JS -->
+                    <div class="flex-1 bg-white/5 rounded-t-sm h-[20%]"></div>
+                    <div class="flex-1 bg-white/5 rounded-t-sm h-[40%]"></div>
+                    <div class="flex-1 bg-white/5 rounded-t-sm h-[30%]"></div>
+                    <div class="flex-1 bg-white/5 rounded-t-sm h-[80%]"></div>
+                    <div class="flex-1 bg-amber/50 rounded-t-sm h-[100%]"></div>
+                </div>
+            </div>
+
+            <!-- Card 3: Distribución por Nivel -->
+            <div class="bg-carbon/60 border border-white/5 rounded-sm p-4 flex flex-col justify-between h-32">
+                <div class="text-cement text-xs uppercase tracking-wider font-medium mb-2">Distribución de Niveles</div>
+                <div class="flex items-center gap-3 w-full h-full pb-1">
+                    <!-- Bronce -->
+                    <div class="flex-1 flex flex-col justify-end items-center h-full gap-1 group">
+                        <span class="text-xs text-white/50 group-hover:text-white transition-colors" id="valBronce">0</span>
+                        <div class="w-full bg-white/5 rounded-t-sm h-full flex items-end relative">
+                            <div id="barBronce" class="w-full bg-[#A67C52] rounded-t-sm transition-all duration-1000 h-[0%]"></div>
+                        </div>
+                        <span class="text-[10px] text-cement uppercase">Bro</span>
+                    </div>
+                    <!-- Plata -->
+                    <div class="flex-1 flex flex-col justify-end items-center h-full gap-1 group">
+                        <span class="text-xs text-white/50 group-hover:text-white transition-colors" id="valPlata">0</span>
+                        <div class="w-full bg-white/5 rounded-t-sm h-full flex items-end relative">
+                            <div id="barPlata" class="w-full bg-slate-300 rounded-t-sm transition-all duration-1000 h-[0%]"></div>
+                        </div>
+                        <span class="text-[10px] text-cement uppercase">Pla</span>
+                    </div>
+                    <!-- Oro -->
+                    <div class="flex-1 flex flex-col justify-end items-center h-full gap-1 group">
+                         <span class="text-xs text-white/50 group-hover:text-white transition-colors" id="valOro">0</span>
+                        <div class="w-full bg-white/5 rounded-t-sm h-full flex items-end relative">
+                            <div id="barOro" class="w-full bg-[#D4AF37] rounded-t-sm transition-all duration-1000 h-[0%]"></div>
+                        </div>
+                        <span class="text-[10px] text-cement uppercase">Oro</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toolbar de Búsqueda -->
+        <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+            <div class="flex flex-col sm:flex-row gap-4 w-full xl:w-auto flex-wrap">
+                <div class="relative w-full sm:max-w-[200px] flex items-center shrink-0">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-cement" size={16} />
+                    <input type="text" id="searchInput" placeholder="Buscar..." class="w-full bg-carbon/60 border border-white/10 rounded-sm pl-9 pr-4 h-10 text-sm text-white placeholder-cement focus:border-amber focus:outline-none transition-colors" />
+                </div>
+                
+                <div class="relative flex items-center w-full sm:w-40 shrink-0">
+                    <select id="levelFilter" class="w-full appearance-none bg-carbon/60 border border-white/10 text-white text-sm rounded-sm h-10 pl-4 pr-10 focus:border-amber focus:outline-none cursor-pointer transition-colors hover:border-white/20">
+                        <option value="all">Todo Nivel</option>
+                        <option value="Bronce">Bronce</option>
+                        <option value="Plata">Plata</option>
+                        <option value="Oro">Oro</option>
+                    </select>
+                    <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-cement pointer-events-none" size={14} />
+                </div>
+
+                <div class="relative flex items-center bg-carbon/60 border border-white/10 rounded-sm h-10 shrink-0 w-full sm:w-auto">
+                    <button id="prevMonthBtn" class="px-2 h-full flex items-center justify-center text-cement hover:text-white hover:bg-white/5 transition-colors border-r border-white/5 cursor-pointer">
+                        <ChevronLeft size={16} />
+                    </button>
+                    <div id="currentMonthDisplay" class="text-sm font-medium min-w-[130px] text-center select-none cursor-pointer text-cement" title="Haz clic para ver de todo el tiempo">
+                        Mes y Año
+                    </div>
+                    <button id="nextMonthBtn" class="px-2 h-full flex items-center justify-center text-cement hover:text-white hover:bg-white/5 transition-colors border-l border-white/5 cursor-pointer">
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+                
+                <div class="relative flex items-center w-full sm:w-40 shrink-0">
+                    <select id="sortFilter" class="w-full appearance-none bg-carbon/60 border border-white/10 text-white text-sm rounded-sm h-10 pl-4 pr-10 focus:border-amber focus:outline-none cursor-pointer transition-colors hover:border-white/20">
+                        <option value="newest">Más recientes</option>
+                        <option value="oldest">Más antiguos</option>
+                        <option value="points_desc">Más puntos</option>
+                    </select>
+                    <svg class="absolute right-3 top-1/2 -translate-y-1/2 text-cement pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+                </div>
+            </div>
+
+            <button class="bg-carbon/60 border border-white/10 text-cement hover:text-white h-10 px-4 rounded-sm transition-colors flex items-center gap-2 text-sm shrink-0">
+                <Download size={16} /> Exportar
+            </button>
+        </div>
+
+        <!-- Contenedor Principal (CRM) -->
+        <div class="bg-carbon/60 border border-white/5 rounded-sm backdrop-blur-sm p-0 flex-1 overflow-hidden flex flex-col">
+            <div class="w-full border-b border-white/5 bg-carbon/80 hidden md:grid grid-cols-[auto_1.5fr_1fr_1.5fr_1fr_1fr_1fr_auto] gap-4 p-4 text-xs font-medium text-cement uppercase tracking-wider">
+                <div class="w-10"></div>
+                <div>Nombre</div>
+                <div>Teléfono</div>
+                <div>Correo</div>
+                <div>Nivel</div>
+                <div>Puntos</div>
+                <div>Registro</div>
+                <div class="text-right">Acciones</div>
+            </div>
+
+            <div id="clientsContainer" class="flex-1 overflow-y-auto p-2 space-y-2">
+                <div class="flex items-center justify-center p-6 h-[40vh] border border-white/10 border-dashed rounded-sm m-2 text-cement">
+                    [ Cargando clientes... ]
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center text-xs text-cement px-1">
+            <span id="clientCount">Cargando...</span>
+        </div>
+    </div>
+
+    <!-- Modal Editar Cliente -->
+    <div id="editClientModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-obsidian border border-white/10 rounded-sm w-full max-w-md overflow-hidden flex flex-col shadow-2xl">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-carbon/40">
+                <div class="flex flex-col">
+                    <h3 class="text-lg font-medium text-white flex items-center gap-2">Modificar Cliente</h3>
+                    <span id="editClientRegistrationDate" class="text-xs text-cement mt-1">Registrado el: --</span>
+                </div>
+                <button type="button" id="closeModalBtn" class="text-cement hover:text-white transition-colors">✕</button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="editClientId" />
+                
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <label class="text-xs text-cement uppercase tracking-wider font-medium">Información de Contacto</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="text" id="editClientName" placeholder="Nombre completo" class="w-full bg-carbon border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:border-amber focus:outline-none" />
+                            <input type="text" id="editClientPhone" placeholder="Teléfono" class="w-full bg-carbon border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:border-amber focus:outline-none" />
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <input type="email" id="editClientEmail" placeholder="Correo electrónico" readonly title="El correo debe modificarse desde la cuenta del usuario por seguridad (Auth)" class="w-full bg-carbon/40 border border-white/10 rounded-sm px-3 py-2 text-cement text-sm cursor-not-allowed" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                     <div class="space-y-2">
+                        <label class="text-xs text-cement uppercase tracking-wider font-medium">Puntos Lealtad</label>
+                        <input type="number" id="editClientPoints" min="0" class="w-full bg-carbon border border-white/10 rounded-sm px-3 py-2 text-amber text-sm font-medium focus:border-amber focus:outline-none" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs text-cement uppercase tracking-wider font-medium">Nivel</label>
+                        <select id="editClientLevel" class="w-full bg-carbon border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:border-amber focus:outline-none cursor-pointer">
+                            <option value="Bronce">Bronce</option>
+                            <option value="Plata">Plata</option>
+                            <option value="Oro">Oro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mensaje de Respuesta UI -->
+            <div id="modalStatusMsg" class="hidden px-6 pb-4 text-sm font-medium text-center"></div>
+
+            <div class="p-6 border-t border-white/5 bg-carbon/40 flex justify-end gap-3">
+                <button type="button" id="cancelModalBtn" class="px-4 py-2 text-sm text-cement hover:text-white transition-colors rounded-sm cursor-pointer">Cancelar</button>
+                <button type="button" id="saveModalBtn" class="px-4 py-2 text-sm bg-amber text-carbon font-medium hover:bg-white transition-colors rounded-sm cursor-pointer">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</BarberoLayout>
+
+<script>
+    import { supabase } from "../../../lib/supabase";
+
+    let stateClients = [];
+
+    async function loadClients() {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, first_name, phone, role, points, visits, created_at, email')
+                .eq('role', 'client')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            
+            // Calc dynamic level based on visits
+            stateClients = (data || []).map(c => {
+                const v = c.visits || 0;
+                let lvl = 'Bronce';
+                if (v >= 15) lvl = 'Oro';
+                else if (v >= 8) lvl = 'Plata';
+                return { ...c, visits: v, level: lvl };
+            });
+
+            updateMetrics(stateClients);
+            applyFilters(); // will render based on current filters and sorting
+        } catch (error) {
+            console.error("Error loading clients:", error);
+        }
+    }
+
+    function updateMetrics(clients) {
+        const total = clients.length;
+        const totalEl = document.getElementById('metricTotal');
+        if(totalEl) totalEl.innerText = total;
+
+        const now = new Date();
+        const thisMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        
+        let lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthStr = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
+
+        let thisMonthCount = 0;
+        let lastMonthCount = 0;
+        let levelCounts = { 'Bronce': 0, 'Plata': 0, 'Oro': 0 };
+
+        // Last 5 months counts for chart
+        let chartData = [];
+        for (let i = 4; i >= 0; i--) {
+            let d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            chartData.push({
+                key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+                count: 0
+            });
+        }
+
+        clients.forEach(c => {
+            let mStr = "";
+            if(c.created_at) {
+                const d = new Date(c.created_at);
+                mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                if(mStr === thisMonthStr) thisMonthCount++;
+                if(mStr === lastMonthStr) lastMonthCount++;
+
+                let cd = chartData.find(x => x.key === mStr);
+                if(cd) cd.count++;
+            }
+            levelCounts[c.level || 'Bronce'] = (levelCounts[c.level || 'Bronce'] || 0) + 1;
+        });
+
+        const tmEl = document.getElementById('metricThisMonth');
+        if(tmEl) tmEl.innerText = thisMonthCount;
+        
+        let growthStr = "0%";
+        let growthClass = "text-cement bg-white/5";
+        if(lastMonthCount > 0) {
+            let p = ((thisMonthCount - lastMonthCount) / lastMonthCount) * 100;
+            if(p > 0) { growthStr = `+${p.toFixed(0)}%`; growthClass = "text-green-400 bg-green-400/10"; }
+            else if (p < 0) { growthStr = `${p.toFixed(0)}%`; growthClass = "text-red-400 bg-red-400/10"; }
+            else { growthStr = `0%`; }
+        } else if (thisMonthCount > 0) {
+            growthStr = `+100%`; growthClass = "text-green-400 bg-green-400/10";
+        }
+        
+        const mg = document.getElementById('metricGrowth');
+        if(mg) {
+            mg.innerText = growthStr;
+            mg.className = `text-[10px] font-medium px-2 py-0.5 rounded-sm ${growthClass}`;
+        }
+
+        // Levels
+        const updateLevel = (id, count, totalCount) => {
+            const val = document.getElementById(`val${id}`);
+            const bar = document.getElementById(`bar${id}`);
+            if(val && bar) {
+                val.innerText = count;
+                // Pequeño timeout para que se anime al cargar
+                setTimeout(() => {
+                    bar.style.height = totalCount > 0 ? `${(count / totalCount) * 100}%` : '0%';
+                }, 100);
+            }
+        };
+        updateLevel('Bronce', levelCounts['Bronce'], total);
+        updateLevel('Plata', levelCounts['Plata'], total);
+        updateLevel('Oro', levelCounts['Oro'], total);
+
+        // Chart
+        const chartContainer = document.getElementById('chartThisMonth');
+        if(chartContainer) {
+            const maxVal = Math.max(...chartData.map(d => d.count), 1);
+            chartContainer.innerHTML = chartData.map((d, i) => {
+                const h = (d.count / maxVal) * 100;
+                const bg = i === chartData.length - 1 ? 'bg-amber/50' : 'bg-white/5';
+                return `<div class="flex-1 ${bg} rounded-t-sm transition-all duration-1000" style="height: 0%" data-h="${h}%" title="${d.count} registrados en ${d.key}"></div>`;
+            }).join('');
+            
+            // Animar las barras
+            setTimeout(() => {
+                Array.from(chartContainer.children).forEach(bar => {
+                    bar.style.height = bar.getAttribute('data-h');
+                });
+            }, 100);
+        }
+    }
+
+    function renderClients(clients) {
+        const container = document.getElementById('clientsContainer');
+        const count = document.getElementById('clientCount');
+        if (!container) return;
+
+        if (count) count.innerText = `Total: ${clients.length} clientes`;
+
+        if (clients.length === 0) {
+            container.innerHTML = `<div class="p-6 text-center text-cement text-sm">No hay clientes registrados o coinciden con la búsqueda.</div>`;
+            return;
+        }
+
+        container.innerHTML = clients.map(client => `
+             <div class="bg-carbon/40 hover:bg-carbon border border-white/5 rounded-sm p-4 transition-all duration-300 group">
+                <div class="flex flex-col md:grid md:grid-cols-[auto_1.5fr_1fr_1.5fr_1fr_1fr_1fr_auto] gap-4 items-center">
+                    
+                    <div class="w-10 h-10 rounded-sm bg-white/5 flex items-center justify-center text-amber font-light border border-white/10 uppercase">
+                        ${(client.first_name || 'C').substring(0, 1)}
+                    </div>
+
+                    <div class="text-center md:text-left min-w-0 w-full truncate">
+                        <div class="font-medium text-white truncate">${client.first_name || 'Sin Nombre'}</div>
+                    </div>
+
+                    <div class="text-center md:text-left text-sm text-cement w-full truncate">
+                        ${client.phone || '-'}
+                    </div>
+
+                    <div class="text-center md:text-left text-sm text-white/50 w-full truncate">
+                        ${client.email || '-'}
+                    </div>
+
+                    <div class="text-center md:text-left flex flex-col justify-center items-center md:items-start w-full">
+                        <span class="px-2 py-1 rounded-sm text-xs font-medium border \${
+                            client.level === 'Oro' ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30' : 
+                            client.level === 'Plata' ? 'bg-slate-300/10 text-slate-300 border-slate-300/30' :
+                            'bg-[#A67C52]/10 text-[#A67C52] border-[#A67C52]/30'
+                        }">
+                           ${client.level || 'Bronce'}
+                        </span>
+                    </div>
+
+                    <div class="text-center md:text-left flex flex-col justify-center items-center md:items-start w-full">
+                        <div class="text-sm text-white">${client.points || 0}</div>
+                    </div>
+
+                    <div class="text-center md:text-left text-xs text-cement w-full">
+                        ${new Date(client.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </div>
+
+                    <div class="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity flex justify-center md:justify-end gap-2 w-full mt-2 md:mt-0">
+                         <button data-edit-id="${client.id}" class="edit-btn p-2 text-cement hover:text-white hover:bg-white/5 rounded-sm transition-colors cursor-pointer" title="Editar Cliente">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                        </button>
+                        <button data-delete-id="${client.id}" class="delete-btn p-2 text-cement hover:text-red-400 hover:bg-red-400/10 rounded-sm transition-colors cursor-pointer" title="Borrar Cliente">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        `).join('');
+
+        // Listeners for edit/delete
+        document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.getAttribute('data-edit-id');
+            openModal(id);
+        }));
+
+        document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => {
+            const id = e.currentTarget.getAttribute('data-delete-id');
+            if (confirm('Al eliminar este cliente se le quitará el rol de cliente, ocultándolo de la lista. Sus citas aún requerirán limpieza manual si las tiene. ¿Continuar?')) {
+                const { error } = await supabase.from('profiles').update({ role: null }).eq('id', id);
+                if (!error) loadClients();
+            }
+        }));
+    }
+
+    // Modal behavior
+    const modal = document.getElementById('editClientModal');
+    
+    function openModal(id) {
+        const client = stateClients.find(c => c.id === id);
+        if(!client) return;
+
+        document.getElementById('editClientId').value = client.id;
+        document.getElementById('editClientName').value = client.first_name || '';
+        document.getElementById('editClientPhone').value = client.phone || '';
+        document.getElementById('editClientEmail').value = client.email || '';
+        document.getElementById('editClientPoints').value = client.points || 0;
+        document.getElementById('editClientLevel').value = client.level || 'Bronce';
+        
+        // Mostrar fecha de registro
+        const dateStr = new Date(client.created_at).toLocaleDateString('es-ES', { 
+            day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+        });
+        document.getElementById('editClientRegistrationDate').innerText = `Registrado el: ${dateStr}`;
+        
+        // Reset status message
+        const statusMsg = document.getElementById('modalStatusMsg');
+        if (statusMsg) {
+            statusMsg.className = 'hidden px-6 pb-4 text-sm font-medium text-center';
+            statusMsg.innerText = '';
+        }
+        
+        modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+    }
+
+    document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
+    document.getElementById('cancelModalBtn')?.addEventListener('click', closeModal);
+
+    document.getElementById('saveModalBtn')?.addEventListener('click', async () => {
+        const id = document.getElementById('editClientId').value;
+        const name = document.getElementById('editClientName').value;
+        const phone = document.getElementById('editClientPhone').value;
+        const email = document.getElementById('editClientEmail').value;
+        const points = parseInt(document.getElementById('editClientPoints').value) || 0;
+        const level = document.getElementById('editClientLevel').value;
+        const saveBtn = document.getElementById('saveModalBtn');
+        const statusMsg = document.getElementById('modalStatusMsg');
+
+        // Estado cargando
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Guardando...';
+        statusMsg.className = 'hidden';
+
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ first_name: name, phone: phone, points: points, level: level }) // el correo no se toca
+                .eq('id', id);
+
+            if(!error) {
+                // Éxito visual
+                statusMsg.innerText = '¡Cambios guardados correctamente!';
+                statusMsg.className = 'px-6 pb-4 text-sm font-medium text-center text-green-400 block';
+                
+                loadClients();
+                
+                // Cerrar después de éxito
+                setTimeout(() => {
+                    closeModal();
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = 'Guardar Cambios';
+                }, 1000);
+            } else {
+                throw error;
+            }
+        } catch(err) {
+            console.error(err);
+            statusMsg.innerText = 'Error al actualizar los datos. Intenta nuevamente.';
+            statusMsg.className = 'px-6 pb-4 text-sm font-medium text-center text-red-500 block';
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Guardar Cambios';
+        }
+    });
+
+    let currentFilterDate = null; // null significa "Todo el tiempo"
+
+    function updateMonthDisplay() {
+        const display = document.getElementById('currentMonthDisplay');
+        if (!display) return;
+        
+        if (!currentFilterDate) {
+            display.innerText = "Ver todo el tiempo";
+            display.classList.add('text-cement');
+            display.classList.remove('text-white');
+        } else {
+            const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            display.innerText = `${months[currentFilterDate.getMonth()]} ${currentFilterDate.getFullYear()}`;
+            display.classList.remove('text-cement');
+            display.classList.add('text-amber'); // Resaltar mes filtrado
+        }
+    }
+
+    // Exponer applyFilters al nivel principal del tag <script> para que loadClients lo pueda llamar
+    function applyFilters() {
+        const term = (document.getElementById('searchInput')?.value || '').toLowerCase();
+        const level = document.getElementById('levelFilter')?.value || 'all';
+        const sortF = document.getElementById('sortFilter')?.value || 'newest';
+
+        let filtered = stateClients.filter(c => {
+            const matchesSearch = !term || (
+                (c.first_name && c.first_name.toLowerCase().includes(term)) ||
+                (c.phone && c.phone.includes(term)) ||
+                (c.email && c.email.toLowerCase().includes(term))
+            );
+            
+            const matchesLevel = level === 'all' || c.level === level;
+
+            let matchesDate = true;
+            if (currentFilterDate && c.created_at) {
+                const d = new Date(c.created_at);
+                matchesDate = (d.getFullYear() === currentFilterDate.getFullYear() && d.getMonth() === currentFilterDate.getMonth());
+            } else if (currentFilterDate && !c.created_at) {
+                matchesDate = false;
+            }
+
+            return matchesSearch && matchesLevel && matchesDate;
+        });
+
+        // Sorting
+        filtered.sort((a, b) => {
+            if(sortF === 'newest') {
+                return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+            } else if(sortF === 'oldest') {
+                return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+            } else if(sortF === 'points_desc') {
+                return (b.points || 0) - (a.points || 0);
+            }
+            return 0;
+        });
+
+        renderClients(filtered);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // Init state visual
+        updateMonthDisplay();
+        loadClients();
+
+        // Listeners for inputs
+        document.getElementById('searchInput')?.addEventListener('input', applyFilters);
+        document.getElementById('levelFilter')?.addEventListener('change', applyFilters);
+        document.getElementById('sortFilter')?.addEventListener('change', applyFilters);
+
+        // Listeners for month navigator
+        document.getElementById('prevMonthBtn')?.addEventListener('click', () => {
+            if (!currentFilterDate) {
+                currentFilterDate = new Date();
+                currentFilterDate.setDate(1);
+            } else {
+                currentFilterDate.setMonth(currentFilterDate.getMonth() - 1);
+            }
+            updateMonthDisplay();
+            applyFilters();
+        });
+
+        document.getElementById('nextMonthBtn')?.addEventListener('click', () => {
+            if (!currentFilterDate) {
+                currentFilterDate = new Date();
+                currentFilterDate.setDate(1);
+            } else {
+                currentFilterDate.setMonth(currentFilterDate.getMonth() + 1);
+            }
+            updateMonthDisplay();
+            applyFilters();
+        });
+
+        document.getElementById('currentMonthDisplay')?.addEventListener('click', () => {
+            currentFilterDate = null; // Reiniciar
+            updateMonthDisplay();
+            applyFilters();
+        });
+    });
+</script>
+
