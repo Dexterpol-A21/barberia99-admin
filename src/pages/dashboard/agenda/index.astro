@@ -236,7 +236,7 @@ import ButtonCTA from "../../../components/ui/ButtonCTA.astro";
         } catch (error) {
             console.error("Error definitivo listando agenda:", error);
             const container = document.getElementById('appointmentsContainer');
-            if(container) container.innerHTML = `<div class="p-6 text-center text-red-400 text-sm">Error conectando con la agenda. Revisa la consola o la estructura de la base de datos.</div>`;
+            if(container) container.innerHTML = `<div class="p-6 text-center text-[#cc0000] bg-[#cc0000]/10 border border-[#cc0000]/20 rounded-sm font-medium">No se pudieron cargar las citas.<br/><span class="font-normal text-sm mt-2 block">Es probable que un bloqueador de anuncios (AdBlock, Avast, Brave) esté impidiendo la conexión a la base de datos. Por favor, <b>desactívalo para este sitio</b> y recarga la página.</span></div>`;
         }
     }
 

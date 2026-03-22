@@ -549,10 +549,23 @@ function formatPrice(service) {
     document.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             if(!confirm("¿Eliminar este servicio? Esto no se puede deshacer.")) return;
-            const id = (e.currentTarget as HTMLElement).getAttribute('data-id');
-            const { error } = await supabase.from('services').delete().eq('id', id);
-            if(error) alert("Error al eliminar");
-            else window.location.reload();
+            try {
+                const id = (e.currentTarget as HTMLElement).getAttribute('data-id');
+                const btnNode = e.currentTarget as HTMLButtonElement;
+                btnNode.disabled = true;
+                
+                const { error } = await supabase.from('services').delete().eq('id', id);
+                if(error) {
+                    alert("Error en base de datos al eliminar: " + error.message);
+                    btnNode.disabled = false;
+                } else {
+                    window.location.reload();
+                }
+            } catch (err) {
+                console.error("Excepción al intentar eliminar:", err);
+                alert("Error de conexión: Un bloqueador de anuncios o antivirus podría estar bloqueando a Supabase.");
+                (e.currentTarget as HTMLButtonElement).disabled = false;
+            }
         });
     });
 
